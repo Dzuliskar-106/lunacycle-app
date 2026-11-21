@@ -24,11 +24,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install dependencies & Add Android platform
-        run: |
-          npm install
-          npx cap add android
-          npx cap sync android
+     - name: Install dependencies & Add Android platform
+     run: |
+       npm init -y
+       npm install @capacitor/core@^6.0.0 @capacitor/cli@^6.0.0 @capacitor/android@^6.0.0 @capacitor/local-notifications@^6.0.0
+       npx cap add android
+       npx cap sync android
 
       - name: Generate Launcher Icon & Universal Notification SmallIcon
         run: |

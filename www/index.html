@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>LunaCycle - Kalender & Pelacak Siklus</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #FDF8FA;
+      color: #332938;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+    .day-cell {
+      aspect-ratio: 1 / 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      position: relative;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .day-cell:active { transform: scale(0.94); }
+    .phase-period { background: #F43F5E; color: white; font-weight: 700; box-shadow: 0 4px 10px rgba(244, 63, 94, 0.25); }
+    .phase-predicted { background: #FFE4E6; color: #BE123C; border: 1.5px dashed #FB7185; font-weight: 600; }
+    .phase-fertile { background: #F3E8FF; color: #7E22CE; font-weight: 600; }
+    .phase-ovulation { background: #9333EA; color: white; font-weight: 700; box-shadow: 0 4px 10px rgba(147, 51, 234, 0.25); }
+    .phase-pms { background: #FEF3C7; color: #B45309; }
+    .today-ring { outline: 2.5px solid #332938; outline-offset: 2px; }
+  </style>
+</head>
+<body class="min-h-screen pb-24">
+
+  <!-- Header -->
+  <header class="bg-gradient-to-r from-rose-500 to-purple-600 text-white px-5 pt-7 pb-8 rounded-b-3xl shadow-md">
+    <div class="max-w-md mx-auto flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-bold tracking-tight">LunaCycle</h1>
+        <p class="text-xs text-rose-100 mt-0.5">Kalender Siklus & Pengingat Otomatis</p>
+      </div>
+      <button onclick="testNativeNotification()" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white text-xs font-semibold px-3 py-2 rounded-xl flex items-center gap-1.5 transition">
+        <span>🔔</span> Tes Notif HP
+      </button>
+    </div>
+
+    <!-- Status Card -->
+    <div class="max-w-md mx-auto mt-5 bg-white/15 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+      <div class="flex justify-between items-center">
+        <div>
+          <p class="text-xs text-rose-100">Status Siklus Saat Ini</p>
+          <h2 id="statusTitle" class="text-lg font-bold mt-0.5">Menghitung...</h2>
+          <p id="statusSubtitle" class="text-xs text-rose-100 mt-1">Atur tanggal haid terakhir di bawah</p>
+        </div>
+        <div class="bg-white text-rose-600 rounded-2xl px-3.5 py-2 text-center shadow-sm">
+          <span id="countdownDays" class="block text-xl font-extrabold leading-none">-</span>
+          <span class="text-[10px] font-semibold uppercase tracking-wider">Hari Lagi</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto px-4 -mt-4 space-y-4">
+
+    <!-- Kalender Card -->
+    <section class="bg-white rounded-3xl p-4 shadow-sm border border-rose-100">
+      <div class="flex items-center justify-between mb-4">
+        <button onclick="changeMonth(-1)" class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 font-bold flex items-center justify-center">‹</button>
+        <h3 id="monthYearLabel" class="font-bold text-base text-slate-800">Bulan Tahun</h3>
+        <button onclick="changeMonth(1)" class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 font-bold flex items-center justify-center">›</button>
+      </div>
+
+      <div class="calendar-grid text-center text-[11px] font-bold text-slate-400 mb-2">
+        <div>MIN</div><div>SEN</div><div>SEL</div><div>RAB</div><div>KAM</div><div>JUM</div><div>SAB</div>
+      </div>
+      <div id="calendarDays" class="calendar-grid text-sm"></div>
+
+      <!-- Legenda -->
+      <div class="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100 text-xs text-slate-600">
+        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-rose-500"></span> Haid Tercatat</div>
+        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-rose-100 border border-dashed border-rose-400"></span> Prediksi Haid</div>
+        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-purple-100"></span> Masa Subur</div>
+        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-purple-600"></span> Puncak Ovulasi</div>
+      </div>
+    </section>
+
+    <!-- Pengaturan Siklus & Penjadwalan Notif -->
+    <section class="bg-white rounded-3xl p-4 shadow-sm border border-rose-100 space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-sm text-slate-800">Pengaturan Siklus & Alarm Notifikasi</h3>
+        <span id="notifStatusBadge" class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Aktif</span>
+      </div>
+
+      <div class="grid grid-cols-1 gap-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">Tanggal Hari Pertama Haid Terakhir</label>
+          <input type="date" id="lastPeriodInput" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium focus:outline-none focus:border-rose-500" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">Panjang Siklus (Hari)</label>
+            <input type="number" id="cycleLengthInput" min="20" max="45" value="28" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">Lama Haid (Hari)</label>
+            <input type="number" id="periodDurationInput" min="2" max="10" value="5" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium" />
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">Jam Pengingat Notifikasi di HP</label>
+          <input type="time" id="reminderTimeInput" value="08:00" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium" />
+        </div>
+      </div>
+
+      <button onclick="saveSettingsAndSchedule()" class="w-full bg-rose-500 hover:bg-rose-600 active:scale-[0.99] text-white font-bold text-sm py-3 rounded-2xl shadow-sm transition">
+        Simpan & Jadwalkan Notifikasi HP
+      </button>
+    </section>
+
+  </main>
+
+  <!-- Modal Catatan Harian -->
+  <div id="noteModal" class="fixed inset-0 bg-black/40 backdrop-blur-xs hidden items-end sm:items-center justify-center z-50 p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl p-5 shadow-xl space-y-3">
+      <div class="flex justify-between items-center">
+        <h4 id="modalDateTitle" class="font-bold text-base text-slate-800">Catatan Tanggal</h4>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Gejala / Mood Hari Ini</label>
+        <select id="moodSelect" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
+          <option value="">-- Pilih kondisi --</option>
+          <option value="Kram Perut">😣 Kram Perut</option>
+          <option value="Mood Swing / Sensitif">🥺 Mood Swing / Sensitif</option>
+          <option value="Nyeri Payudara">😫 Nyeri Payudara</option>
+          <option value="Lelah / Mengantuk">😴 Lelah / Mengantuk</option>
+          <option value="Fit & Berenergi">😊 Fit & Berenergi</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Catatan Tambahan</label>
+        <textarea id="noteText" rows="3" placeholder="Tulis catatan singkat..." class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"></textarea>
+      </div>
+      <div class="flex gap-2 pt-1">
+        <button onclick="setAsPeriodStart()" class="flex-1 bg-rose-100 text-rose-700 font-bold text-xs py-2.5 rounded-xl">Tandai Mulai Haid</button>
+        <button onclick="saveDailyNote()" class="flex-1 bg-purple-600 text-white font-bold text-xs py-2.5 rounded-xl">Simpan Catatan</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State Aplikasi
+    let currentViewDate = new Date();
+    let selectedDateKey = null;
+
+    const defaultData = {
+      lastPeriod: new Date().toISOString().split('T')[0],
+      cycleLength: 28,
+      periodDuration: 5,
+      reminderTime: "08:00",
+      notes: {}
+    };
+
+    let appData = JSON.parse(localStorage.getItem('lunacycle_data')) || defaultData;
+
+    // Inisialisasi Capacitor Local Notifications (Native Android)
+    function getLocalNotifPlugin() {
+      if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+        return window.Capacitor.Plugins.LocalNotifications;
+      }
+      return null;
+    }
+
+    async function requestNotifPermission() {
+      const LocalNotifications = getLocalNotifPlugin();
+      if (LocalNotifications) {
+        const perm = await LocalNotifications.requestPermissions();
+        return perm.display === 'granted';
+      } else if ('Notification' in window) {
+        const perm = await Notification.requestPermission();
+        return perm === 'granted';
+      }
+      return false;
+    }
+
+    // Fungsi Tes Notifikasi Langsung ke Bilah Status HP
+    async function testNativeNotification() {
+      const granted = await requestNotifPermission();
+      if (!granted) {
+        alert("Izin notifikasi ditolak. Aktifkan izin notifikasi untuk LunaCycle di Pengaturan HP.");
+        return;
+      }
+
+      const LocalNotifications = getLocalNotifPlugin();
+      if (LocalNotifications) {
+        await LocalNotifications.schedule({
+          notifications: [
+            {
+              title: "LunaCycle Pengingat 🌸",
+              body: "Notifikasi HP berhasil terhubung! Pengingat jadwal siklus akan muncul otomatis.",
+              id: 999,
+              schedule: { at: new Date(Date.now() + 2000) }
+            }
+          ]
+        });
+        alert("Notifikasi tes dijadwalkan! Akan muncul di bilah atas HP dalam 2 detik.");
+      } else {
+        new Notification("LunaCycle Pengingat 🌸", {
+          body: "Mode preview browser aktif. Saat di-build jadi APK, notif akan muncul otomatis di HP."
+        });
+      }
+    }
+
+    // Jadwalkan Notifikasi Otomatis di Sistem Android (H-2 PMS, Hari H Haid, Puncak Ovulasi)
+    async function scheduleCycleNotifications(nextPeriodDate, ovulationDate) {
+      const LocalNotifications = getLocalNotifPlugin();
+      if (!LocalNotifications) return;
+
+      const granted = await requestNotifPermission();
+      if (!granted) return;
+
+      // Hapus jadwal lama sebelum membuat yang baru
+      try {
+        await LocalNotifications.cancel({ notifications: [{ id: 101 }, { id: 102 }, { id: 103 }] });
+      } catch (e) {}
+
+      const [hour, minute] = appData.reminderTime.split(':').map(Number);
+      const now = new Date();
+      const notificationsToSchedule = [];
+
+      // 1. Pengingat H-2 Menjelang Haid (PMS)
+      const pmsDate = new Date(nextPeriodDate);
+      pmsDate.setDate(pmsDate.getDate() - 2);
+      pmsDate.setHours(hour, minute, 0, 0);
+      if (pmsDate > now) {
+        notificationsToSchedule.push({
+          id: 101,
+          title: "Persiapan Siklus (H-2 Haid) 🌷",
+          body: "Perkiraan haid 2 hari lagi. Jangan lupa siapkan pembalut & jaga pola istirahat ya!",
+          schedule: { at: pmsDate, allowWhileIdle: true }
+        });
+      }
+
+      // 2. Pengingat Hari Pertama Prediksi Haid
+      const periodStartNotif = new Date(nextPeriodDate);
+      periodStartNotif.setHours(hour, minute, 0, 0);
+      if (periodStartNotif > now) {
+        notificationsToSchedule.push({
+          id: 102,
+          title: "Jadwal Perkiraan Haid Hari Ini 🩸",
+          body: "Hari ini adalah perkiraan hari pertama haidmu. Buka LunaCycle untuk mencatat siklus.",
+          schedule: { at: periodStartNotif, allowWhileIdle: true }
+        });
+      }
+
+      // 3. Pengingat Puncak Ovulasi / Masa Subur
+      const ovulNotif = new Date(ovulationDate);
+      ovulNotif.setHours(hour, minute, 0, 0);
+      if (ovulNotif > now) {
+        notificationsToSchedule.push({
+          id: 103,
+          title: "Puncak Masa Subur (Ovulasi) 💜",
+          body: "Hari ini adalah puncak masa subur dalam siklus bulananmu.",
+          schedule: { at: ovulNotif, allowWhileIdle: true }
+        });
+      }
+
+      if (notificationsToSchedule.length > 0) {
+        await LocalNotifications.schedule({ notifications: notificationsToSchedule });
+      }
+    }
+
+    function parseLocalDate(dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function formatDateKey(dateObj) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function calculateCycleData() {
+      const start = parseLocalDate(appData.lastPeriod);
+      const cycleLen = Number(appData.cycleLength);
+      const periodDur = Number(appData.periodDuration);
+
+      const nextPeriod = new Date(start);
+      nextPeriod.setDate(start.getDate() + cycleLen);
+
+      const ovulation = new Date(nextPeriod);
+      ovulation.setDate(nextPeriod.getDate() - 14);
+
+      const fertileStart = new Date(ovulation);
+      fertileStart.setDate(ovulation.getDate() - 4);
+
+      const fertileEnd = new Date(ovulation);
+      fertileEnd.setDate(ovulation.getDate() + 1);
+
+      return { start, nextPeriod, ovulation, fertileStart, fertileEnd, cycleLen, periodDur };
+    }
+
+    function updateDashboard() {
+      const { nextPeriod, ovulation } = calculateCycleData();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const diffTime = nextPeriod - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      const statusTitle = document.getElementById('statusTitle');
+      const statusSubtitle = document.getElementById('statusSubtitle');
+      const countdownDays = document.getElementById('countdownDays');
+
+      if (diffDays > 0) {
+        countdownDays.textContent = diffDays;
+        statusTitle.textContent = "Menuju Haid Berikutnya";
+        statusSubtitle.textContent = `Perkiraan: ${nextPeriod.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+      } else if (diffDays === 0) {
+        countdownDays.textContent = "Hari Ini";
+        statusTitle.textContent = "Perkiraan Mulai Haid";
+        statusSubtitle.textContent = "Catat tanggal jika sudah mulai hari ini";
+      } else {
+        countdownDays.textContent = Math.abs(diffDays);
+        statusTitle.textContent = "Terlambat dari Perkiraan";
+        statusSubtitle.textContent = `Terlambat ${Math.abs(diffDays)} hari dari jadwal`;
+      }
+
+      scheduleCycleNotifications(nextPeriod, ovulation);
+    }
+
+    function renderCalendar() {
+      const year = currentViewDate.getFullYear();
+      const month = currentViewDate.getMonth();
+      const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+      document.getElementById('monthYearLabel').textContent = `${monthNames[month]} ${year}`;
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const grid = document.getElementById('calendarDays');
+      grid.innerHTML = '';
+
+      const { start, nextPeriod, ovulation, fertileStart, fertileEnd, periodDur } = calculateCycleData();
+      const todayKey = formatDateKey(new Date());
+
+      for (let i = 0; i < firstDay; i++) {
+        grid.innerHTML += `<div></div>`;
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const cellDate = new Date(year, month, day);
+        const key = formatDateKey(cellDate);
+        let phaseClass = "bg-slate-50 text-slate-700 hover:bg-rose-50";
+
+        // Cek rentang haid tercatat
+        const periodEnd = new Date(start);
+        periodEnd.setDate(start.getDate() + periodDur - 1);
+
+        // Cek rentang prediksi haid berikutnya
+        const nextPeriodEnd = new Date(nextPeriod);
+        nextPeriodEnd.setDate(nextPeriod.getDate() + periodDur - 1);
+
+        if (cellDate >= start && cellDate <= periodEnd) {
+          phaseClass = "phase-period";
+        } else if (cellDate >= nextPeriod && cellDate <= nextPeriodEnd) {
+          phaseClass = "phase-predicted";
+        } else if (key === formatDateKey(ovulation)) {
+          phaseClass = "phase-ovulation";
+        } else if (cellDate >= fertileStart && cellDate <= fertileEnd) {
+          phaseClass = "phase-fertile";
+        }
+
+        const todayClass = (key === todayKey) ? "today-ring" : "";
+        const hasNoteDot = appData.notes[key] ? `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 absolute bottom-1"></span>` : "";
+
+        grid.innerHTML += `
+          <div onclick="openNoteModal('${key}')" class="day-cell ${phaseClass} ${todayClass}">
+            <span>${day}</span>
+            ${hasNoteDot}
+          </div>
+        `;
+      }
+    }
+
+    function changeMonth(step) {
+      currentViewDate.setMonth(currentViewDate.getMonth() + step);
+      renderCalendar();
+    }
+
+    function saveSettingsAndSchedule() {
+      appData.lastPeriod = document.getElementById('lastPeriodInput').value;
+      appData.cycleLength = Number(document.getElementById('cycleLengthInput').value);
+      appData.periodDuration = Number(document.getElementById('periodDurationInput').value);
+      appData.reminderTime = document.getElementById('reminderTimeInput').value;
+
+      localStorage.setItem('lunacycle_data', JSON.stringify(appData));
+      updateDashboard();
+      renderCalendar();
+      alert("Jadwal siklus tersimpan & notifikasi pengingat HP berhasil dijadwalkan!");
+    }
+
+    function openNoteModal(dateKey) {
+      selectedDateKey = dateKey;
+      const dateObj = parseLocalDate(dateKey);
+      document.getElementById('modalDateTitle').textContent = dateObj.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      const existing = appData.notes[dateKey] || { mood: "", text: "" };
+      document.getElementById('moodSelect').value = existing.mood;
+      document.getElementById('noteText').value = existing.text;
+      document.getElementById('noteModal').classList.remove('hidden');
+      document.getElementById('noteModal').classList.add('flex');
+    }
+
+    function closeModal() {
+      document.getElementById('noteModal').classList.add('hidden');
+      document.getElementById('noteModal').classList.remove('flex');
+    }
+
+    function saveDailyNote() {
+      const mood = document.getElementById('moodSelect').value;
+      const text = document.getElementById('noteText').value.trim();
+      if (!mood && !text) {
+        delete appData.notes[selectedDateKey];
+      } else {
+        appData.notes[selectedDateKey] = { mood, text };
+      }
+      localStorage.setItem('lunacycle_data', JSON.stringify(appData));
+      closeModal();
+      renderCalendar();
+    }
+
+    function setAsPeriodStart() {
+      appData.lastPeriod = selectedDateKey;
+      document.getElementById('lastPeriodInput').value = selectedDateKey;
+      localStorage.setItem('lunacycle_data', JSON.stringify(appData));
+      closeModal();
+      updateDashboard();
+      renderCalendar();
+    }
+
+    // Init saat aplikasi dibuka
+    document.getElementById('lastPeriodInput').value = appData.lastPeriod;
+    document.getElementById('cycleLengthInput').value = appData.cycleLength;
+    document.getElementById('periodDurationInput').value = appData.periodDuration;
+    document.getElementById('reminderTimeInput').value = appData.reminderTime;
+
+    requestNotifPermission();
+    updateDashboard();
+    renderCalendar();
+  </script>
+</body>
+</html>

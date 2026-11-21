@@ -1,4 +1,4 @@
-name: Build LunaCycle Android APK
+name: Build LunaCycle Universal Android APK
 
 on:
   push:
@@ -30,7 +30,7 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: Generate Custom LunaCycle App Icon
+      - name: Generate Launcher Icon & Universal Notification SmallIcon
         run: |
           pip install pillow
           python3 - << 'EOF'
@@ -38,6 +38,7 @@ jobs:
           import os, shutil
 
           size = 512
+          # 1. Buat Ikon Utama Aplikasi (Berwarna)
           img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
           draw = ImageDraw.Draw(img)
 
@@ -78,12 +79,28 @@ jobs:
                   resized.save(os.path.join(target_dir, "ic_launcher.png"))
                   resized.save(os.path.join(target_dir, "ic_launcher_round.png"))
                   resized.save(os.path.join(target_dir, "ic_launcher_foreground.png"))
+
+          # 2. Buat Ikon Notifikasi Siluet Putih Transparan (Wajib untuk semua versi Android)
+          notif_size = 96
+          n_img = Image.new("RGBA", (notif_size, notif_size), (0, 0, 0, 0))
+          n_draw = ImageDraw.Draw(n_img)
+          ncx, ncy = 48, 55
+          nr = 24
+          n_draw.ellipse([ncx - nr, ncy - nr, ncx + nr, ncy + nr], fill=(255, 255, 255, 255))
+          n_draw.polygon([(ncx - nr + 2, ncy - 6), (ncx + nr - 2, ncy - 6), (ncx, 14)], fill=(255, 255, 255, 255))
+          # Potongan bulan sabit transparan di tengah tetesan
+          n_draw.ellipse([ncx - 10, ncy - 6, ncx + 10, ncy + 14], fill=(0, 0, 0, 0))
+          n_draw.ellipse([ncx - 4, ncy - 9, ncx + 14, ncy + 9], fill=(255, 255, 255, 255))
+
+          drawable_dir = os.path.join(res_dir, "drawable")
+          os.makedirs(drawable_dir, exist_ok=True)
+          n_img.save(os.path.join(drawable_dir, "ic_stat_lunacycle.png"))
           EOF
 
-      - name: Add Notification Permissions to AndroidManifest
+      - name: Add Universal Notification Permissions to AndroidManifest
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
-          sed -i 's/<uses-permission android:name="android.permission.INTERNET" \/>/<uses-permission android:name="android.permission.INTERNET" \/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" \/>\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" \/>\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" \/>\n    <uses-permission android:name="android.permission.VIBRATE" \/>\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" \/>/' $MANIFEST
+          sed -i 's/<uses-permission android:name="android.permission.INTERNET" \/>/<uses-permission android:name="android.permission.INTERNET" \/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" \/>\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" \/>\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" \/>\n    <uses-permission android:name="android.permission.WAKE_LOCK" \/>\n    <uses-permission android:name="android.permission.VIBRATE" \/>\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" \/>/' $MANIFEST
 
       - name: Build Debug APK
         run: |
@@ -94,5 +111,5 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LunaCycle-APK-Final
+          name: LunaCycle-Universal-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk

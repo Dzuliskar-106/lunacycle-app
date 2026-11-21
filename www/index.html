@@ -41,7 +41,6 @@
       justify-content: space-between;
     }
 
-    /* Header Full Width */
     header {
       background: linear-gradient(135deg, #E11D48 0%, #9333EA 100%);
       color: #FFFFFF;
@@ -149,7 +148,6 @@
       text-transform: uppercase;
     }
 
-    /* Main Content Full Screen */
     main {
       flex: 1;
       padding: 12px;
@@ -301,7 +299,6 @@
       display: inline-block;
     }
 
-    /* Form Pengaturan */
     .settings-title {
       font-size: 15px;
       font-weight: 800;
@@ -320,9 +317,7 @@
       font-weight: 700;
     }
 
-    .form-group {
-      margin-bottom: 10px;
-    }
+    .form-group { margin-bottom: 10px; }
 
     .form-row {
       display: grid;
@@ -371,7 +366,6 @@
 
     .btn-save:active { transform: scale(0.98); }
 
-    /* Modal Catatan */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -449,12 +443,10 @@
 </head>
 <body>
   <div class="app-shell">
-    <!-- Header -->
     <header>
       <div class="header-top">
         <div class="brand">
           <div class="brand-logo">
-            <!-- SVG Logo Bulan & Tetesan -->
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
               <path d="M12 2.5C12 2.5 6 9.2 6 14C6 17.3137 8.68629 20 12 20C15.3137 20 18 17.3137 18 14C18 9.2 12 2.5 12 2.5Z" fill="#FFFFFF"/>
               <path d="M13.5 11.5C12.2 11.5 11.2 12.5 11.2 13.8C11.2 15.1 12.2 16.1 13.5 16.1C14.1 16.1 14.6 15.9 15 15.5C14.1 15.4 13.4 14.7 13.4 13.8C13.4 12.9 14.1 12.2 15 12.1C14.6 11.7 14.1 11.5 13.5 11.5Z" fill="#E11D48"/>
@@ -481,7 +473,6 @@
       </div>
     </header>
 
-    <!-- Main Full Screen Content -->
     <main>
       <section class="card calendar-card">
         <div>
@@ -538,7 +529,6 @@
     </main>
   </div>
 
-  <!-- Modal Catatan Tanggal -->
   <div id="noteModal" class="modal-backdrop">
     <div class="modal-box">
       <div class="modal-header">
@@ -568,6 +558,19 @@
   </div>
 
   <script>
+    function formatDateKey(dateObj) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function parseLocalDate(dateStr) {
+      if (!dateStr || !dateStr.includes('-')) return new Date();
+      const [y, m, d] = dateStr.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
     let currentViewDate = new Date();
     let selectedDateKey = null;
 
@@ -579,38 +582,272 @@
       notes: {}
     };
 
-    let appData = JSON.parse(localStorage.getItem('lunacycle_data')) || defaultData;
-
-    function formatDateKey(dateObj) {
-      const y = dateObj.getFullYear();
-      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-      const d = String(dateObj.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
-    }
-
-    function parseLocalDate(dateStr) {
-      const [y, m, d] = dateStr.split('-').map(Number);
-      return new Date(y, m - 1, d);
+    let appData;
+    try {
+      const saved = JSON.parse(localStorage.getItem('lunacycle_data'));
+      appData = saved ? { ...defaultData, ...saved, notes: saved.notes || {} } : defaultData;
+    } catch (e) {
+      appData = defaultData;
     }
 
     function getLocalNotifPlugin() {
-      if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
-        return window.Capacitor.Plugins.LocalNotifications;
-      }
+      try {
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+          return window.Capacitor.Plugins.LocalNotifications;
+        }
+      } catch (e) {}
       return null;
     }
 
     async function requestNotifPermission() {
-      const LocalNotifications = getLocalNotifPlugin();
-      if (LocalNotifications) {
-        const perm = await LocalNotifications.requestPermissions();
-        return perm.display === 'granted';
-      }
+      try {
+        const LocalNotifications = getLocalNotifPlugin();
+        if (LocalNotifications) {
+          const perm = await LocalNotifications.requestPermissions();
+          return perm.display === 'granted';
+        }
+      } catch (e) {}
       return false;
     }
 
     async function testNativeNotification() {
-      const granted = await requestNotifPermission();
-      const LocalNotifications = getLocalNotifPlugin();
-      if (LocalNotifications && granted) {
-        await
+      try {
+        const granted = await requestNotifPermission();
+        const LocalNotifications = getLocalNotifPlugin();
+        if (LocalNotifications && granted) {
+          await LocalNotifications.schedule({
+            notifications: [{
+              title: "LunaCycle Pengingat 🌸",
+              body: "Notifikasi offline HP aktif! Pengingat haid & masa subur berjalan otomatis.",
+              id: 999,
+              schedule: { at: new Date(Date.now() + 2000) }
+            }]
+          });
+          alert("Notifikasi tes akan muncul di bilah atas HP dalam 2 detik!");
+        } else {
+          alert("Pastikan izin notifikasi untuk LunaCycle diaktifkan di Pengaturan HP.");
+        }
+      } catch (e) {
+        alert("Gagal memicu notifikasi: " + e.message);
+      }
+    }
+
+    async function scheduleCycleNotifications(nextPeriodDate, ovulationDate) {
+      try {
+        const LocalNotifications = getLocalNotifPlugin();
+        if (!LocalNotifications) return;
+
+        const granted = await requestNotifPermission();
+        if (!granted) return;
+
+        try {
+          await LocalNotifications.cancel({ notifications: [{ id: 101 }, { id: 102 }, { id: 103 }] });
+        } catch (e) {}
+
+        const [hour, minute] = (appData.reminderTime || "08:00").split(':').map(Number);
+        const now = new Date();
+        const list = [];
+
+        const pmsDate = new Date(nextPeriodDate);
+        pmsDate.setDate(pmsDate.getDate() - 2);
+        pmsDate.setHours(hour, minute, 0, 0);
+        if (pmsDate > now) {
+          list.push({
+            id: 101,
+            title: "Persiapan Haid (H-2) 🌷",
+            body: "Perkiraan haid 2 hari lagi. Siapkan pembalut & jaga istirahat ya!",
+            schedule: { at: pmsDate, allowWhileIdle: true }
+          });
+        }
+
+        const startNotif = new Date(nextPeriodDate);
+        startNotif.setHours(hour, minute, 0, 0);
+        if (startNotif > now) {
+          list.push({
+            id: 102,
+            title: "Perkiraan Haid Hari Ini 🩸",
+            body: "Hari ini perkiraan hari pertama haidmu. Ketuk untuk mencatat di LunaCycle.",
+            schedule: { at: startNotif, allowWhileIdle: true }
+          });
+        }
+
+        const ovulNotif = new Date(ovulationDate);
+        ovulNotif.setHours(hour, minute, 0, 0);
+        if (ovulNotif > now) {
+          list.push({
+            id: 103,
+            title: "Puncak Masa Subur (Ovulasi) 💜",
+            body: "Hari ini adalah puncak masa subur dalam siklus bulananmu.",
+            schedule: { at: ovulNotif, allowWhileIdle: true }
+          });
+        }
+
+        if (list.length > 0) {
+          await LocalNotifications.schedule({ notifications: list });
+        }
+      } catch (e) {}
+    }
+
+    function calculateCycleData() {
+      const start = parseLocalDate(appData.lastPeriod);
+      const cycleLen = Number(appData.cycleLength) || 28;
+      const periodDur = Number(appData.periodDuration) || 5;
+
+      const nextPeriod = new Date(start);
+      nextPeriod.setDate(start.getDate() + cycleLen);
+
+      const ovulation = new Date(nextPeriod);
+      ovulation.setDate(nextPeriod.getDate() - 14);
+
+      const fertileStart = new Date(ovulation);
+      fertileStart.setDate(ovulation.getDate() - 4);
+
+      const fertileEnd = new Date(ovulation);
+      fertileEnd.setDate(ovulation.getDate() + 1);
+
+      return { start, nextPeriod, ovulation, fertileStart, fertileEnd, periodDur };
+    }
+
+    function updateDashboard() {
+      const { nextPeriod, ovulation } = calculateCycleData();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const diffDays = Math.ceil((nextPeriod - today) / (1000 * 60 * 60 * 24));
+      const statusTitle = document.getElementById('statusTitle');
+      const statusSubtitle = document.getElementById('statusSubtitle');
+      const countdownDays = document.getElementById('countdownDays');
+
+      if (diffDays > 0) {
+        countdownDays.textContent = diffDays;
+        statusTitle.textContent = "Menuju Haid Berikutnya";
+        statusSubtitle.textContent = `Perkiraan: ${nextPeriod.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+      } else if (diffDays === 0) {
+        countdownDays.textContent = "Hari Ini";
+        statusTitle.textContent = "Perkiraan Mulai Haid";
+        statusSubtitle.textContent = "Ketuk tanggal hari ini jika sudah mulai";
+      } else {
+        countdownDays.textContent = Math.abs(diffDays);
+        statusTitle.textContent = "Terlambat dari Jadwal";
+        statusSubtitle.textContent = `Lewat ${Math.abs(diffDays)} hari dari perkiraan`;
+      }
+
+      scheduleCycleNotifications(nextPeriod, ovulation);
+    }
+
+    function renderCalendar() {
+      const year = currentViewDate.getFullYear();
+      const month = currentViewDate.getMonth();
+      const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+      document.getElementById('monthYearLabel').textContent = `${monthNames[month]} ${year}`;
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const grid = document.getElementById('calendarDays');
+      grid.innerHTML = '';
+
+      const { start, nextPeriod, ovulation, fertileStart, fertileEnd, periodDur } = calculateCycleData();
+      const todayKey = formatDateKey(new Date());
+
+      for (let i = 0; i < firstDay; i++) {
+        grid.innerHTML += `<div></div>`;
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const cellDate = new Date(year, month, day);
+        const key = formatDateKey(cellDate);
+        let phaseClass = "";
+
+        const periodEnd = new Date(start);
+        periodEnd.setDate(start.getDate() + periodDur - 1);
+
+        const nextPeriodEnd = new Date(nextPeriod);
+        nextPeriodEnd.setDate(nextPeriod.getDate() + periodDur - 1);
+
+        if (cellDate >= start && cellDate <= periodEnd) {
+          phaseClass = "phase-period";
+        } else if (cellDate >= nextPeriod && cellDate <= nextPeriodEnd) {
+          phaseClass = "phase-predicted";
+        } else if (key === formatDateKey(ovulation)) {
+          phaseClass = "phase-ovulation";
+        } else if (cellDate >= fertileStart && cellDate <= fertileEnd) {
+          phaseClass = "phase-fertile";
+        }
+
+        const todayClass = (key === todayKey) ? "today-ring" : "";
+        const hasNoteDot = appData.notes[key] ? `<span class="note-dot"></span>` : "";
+
+        grid.innerHTML += `
+          <div onclick="openNoteModal('${key}')" class="day-cell ${phaseClass} ${todayClass}">
+            <span>${day}</span>
+            ${hasNoteDot}
+          </div>
+        `;
+      }
+    }
+
+    function changeMonth(step) {
+      currentViewDate.setMonth(currentViewDate.getMonth() + step);
+      renderCalendar();
+    }
+
+    function saveSettingsAndSchedule() {
+      appData.lastPeriod = document.getElementById('lastPeriodInput').value || formatDateKey(new Date());
+      appData.cycleLength = Number(document.getElementById('cycleLengthInput').value) || 28;
+      appData.periodDuration = Number(document.getElementById('periodDurationInput').value) || 5;
+      appData.reminderTime = document.getElementById('reminderTimeInput').value || "08:00";
+
+      localStorage.setItem('lunacycle_data', JSON.stringify(appData));
+      updateDashboard();
+      renderCalendar();
+      alert("Pengaturan disimpan & jadwal notifikasi HP diperbarui!");
+    }
+
+    function openNoteModal(dateKey) {
+      selectedDateKey = dateKey;
+      const dateObj = parseLocalDate(dateKey);
+      document.getElementById('modalDateTitle').textContent = dateObj.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      const existing = appData.notes[dateKey] || { mood: "", text: "" };
+      document.getElementById('moodSelect').value = existing.mood;
+      document.getElementById('noteText').value = existing.text;
+      document.getElementById('noteModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('noteModal').classList.remove('active');
+    }
+
+    function saveDailyNote() {
+      const mood = document.getElementById('moodSelect').value;
+      const text = document.getElementById('noteText').value.trim();
+      if (!mood && !text) {
+        delete appData.notes[selectedDateKey];
+      } else {
+        appData.notes[selectedDateKey] = { mood, text };
+      }
+      localStorage.setItem('lunacycle_data', JSON.stringify(appData));
+      closeModal();
+      renderCalendar();
+    }
+
+    function setAsPeriodStart() {
+      appData.lastPeriod = selectedDateKey;
+      document.getElementById('lastPeriodInput').value = selectedDateKey;
+      localStorage.setItem('lunacycle_data', JSON.stringify(appData));
+      closeModal();
+      updateDashboard();
+      renderCalendar();
+    }
+
+    // Inisialisasi langsung render UI terlebih dahulu sebelum izin notif
+    document.getElementById('lastPeriodInput').value = appData.lastPeriod;
+    document.getElementById('cycleLengthInput').value = appData.cycleLength;
+    document.getElementById('periodDurationInput').value = appData.periodDuration;
+    document.getElementById('reminderTimeInput').value = appData.reminderTime;
+
+    renderCalendar();
+    updateDashboard();
+    requestNotifPermission();
+  </script>
+</body>
+</html>

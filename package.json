@@ -1,15 +1,15 @@
 {
-  "name": "lunacycle-app",
-  "version": "1.0.0",
-  "description": "Aplikasi Kalender Perempuan & Pengingat Siklus",
-  "main": "index.js",
-  "scripts": {
-    "build": "echo 'Static HTML ready'"
+  "appId": "com.lunacycle.tracker",
+  "appName": "LunaCycle",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
   },
-  "dependencies": {
-    "@capacitor/android": "^6.0.0",
-    "@capacitor/cli": "^6.0.0",
-    "@capacitor/core": "^6.0.0",
-    "@capacitor/local-notifications": "^6.0.0"
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_lunacycle",
+      "iconColor": "#E11D48",
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
   }
 }

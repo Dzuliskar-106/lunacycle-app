@@ -41,36 +41,29 @@ jobs:
           img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
           draw = ImageDraw.Draw(img)
 
-          # Background gradasi rose-pink ke ungu dengan sudut membulat
           for y in range(size):
               r = int(225 - (y / size) * 78)
               g = int(29 + (y / size) * 22)
               b = int(72 + (y / size) * 162)
               draw.line([(0, y), (size, y)], fill=(r, g, b, 255))
 
-          # Mask rounded square
           mask = Image.new("L", (size, size), 0)
           ImageDraw.Draw(mask).rounded_rectangle([0, 0, size, size], radius=115, fill=255)
           img.putalpha(mask)
 
-          # Gambar simbol tetesan siklus putih di tengah
           cx, cy = 256, 285
           r_drop = 105
           draw.ellipse([cx - r_drop, cy - r_drop, cx + r_drop, cy + r_drop], fill=(255, 255, 255, 255))
           draw.polygon([(cx - r_drop + 6, cy - 28), (cx + r_drop - 6, cy - 28), (cx, 110)], fill=(255, 255, 255, 255))
 
-          # Gambar bulan sabit rose di dalam tetesan
           draw.ellipse([cx - 48, cy - 32, cx + 48, cy + 64], fill=(225, 29, 72, 255))
           draw.ellipse([cx - 22, cy - 45, cx + 65, cy + 45], fill=(255, 255, 255, 255))
 
           res_dir = "android/app/src/main/res"
-
-          # Hapus adaptive icon bawaan agar ikon custom langsung tampil di semua versi Android
           anydpi_dir = os.path.join(res_dir, "mipmap-anydpi-v26")
           if os.path.exists(anydpi_dir):
               shutil.rmtree(anydpi_dir)
 
-          # Replace semua ikon launcher Android
           sizes = {
               "mipmap-mdpi": 48,
               "mipmap-hdpi": 72,
@@ -90,7 +83,7 @@ jobs:
       - name: Add Notification Permissions to AndroidManifest
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
-          sed -i 's/<uses-permission android:name="android.permission.INTERNET" \/>/<uses-permission android:name="android.permission.INTERNET" \/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" \/>\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" \/>\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" \/>/' $MANIFEST
+          sed -i 's/<uses-permission android:name="android.permission.INTERNET" \/>/<uses-permission android:name="android.permission.INTERNET" \/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" \/>\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" \/>\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" \/>\n    <uses-permission android:name="android.permission.VIBRATE" \/>\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" \/>/' $MANIFEST
 
       - name: Build Debug APK
         run: |
@@ -101,5 +94,5 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LunaCycle-APK-V2
+          name: LunaCycle-APK-Final
           path: android/app/build/outputs/apk/debug/app-debug.apk

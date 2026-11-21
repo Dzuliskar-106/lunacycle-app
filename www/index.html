@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>LunaCycle - Kalender Siklus</title>
+  <title>LunaCycle - Kalender & Riwayat Siklus</title>
   <style>
     :root {
       --bg: #FDF7F9;
@@ -38,7 +38,7 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      padding-bottom: 24px;
     }
 
     header {
@@ -164,13 +164,6 @@
       box-shadow: 0 2px 12px rgba(39, 30, 43, 0.04);
     }
 
-    .calendar-card {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
     .cal-header {
       display: flex;
       justify-content: space-between;
@@ -212,7 +205,6 @@
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       gap: 6px;
-      flex: 1;
     }
 
     .day-cell {
@@ -299,7 +291,8 @@
       display: inline-block;
     }
 
-    .settings-title {
+    /* Section Header */
+    .section-title {
       font-size: 15px;
       font-weight: 800;
       margin-bottom: 12px;
@@ -308,7 +301,7 @@
       align-items: center;
     }
 
-    .badge-offline {
+    .badge-pill {
       font-size: 11px;
       background: #DCFCE7;
       color: #15803D;
@@ -317,6 +310,78 @@
       font-weight: 700;
     }
 
+    .badge-avg {
+      font-size: 11px;
+      background: var(--purple-light);
+      color: var(--purple);
+      padding: 3px 9px;
+      border-radius: 99px;
+      font-weight: 700;
+    }
+
+    /* Riwayat Bulanan */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #FDF8FA;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 12px;
+    }
+
+    .history-left strong {
+      display: block;
+      font-size: 13px;
+      color: var(--text-main);
+    }
+
+    .history-left span {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .history-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cycle-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 8px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+    }
+
+    .btn-del-hist {
+      background: none;
+      border: none;
+      color: #9CA3AF;
+      font-size: 16px;
+      font-weight: 800;
+      padding: 4px;
+      cursor: pointer;
+    }
+
+    .empty-history {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 14px 8px;
+    }
+
+    /* Form Pengaturan */
     .form-group { margin-bottom: 10px; }
 
     .form-row {
@@ -366,6 +431,7 @@
 
     .btn-save:active { transform: scale(0.98); }
 
+    /* Modal Catatan */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -454,7 +520,7 @@
           </div>
           <div>
             <h1>LunaCycle</h1>
-            <p>Pelacak Haid & Ovulasi Offline</p>
+            <p>Pelacak Haid & Riwayat Siklus</p>
           </div>
         </div>
         <button class="btn-test" onclick="testNativeNotification()">🔔 Tes Notif</button>
@@ -474,20 +540,19 @@
     </header>
 
     <main>
-      <section class="card calendar-card">
-        <div>
-          <div class="cal-header">
-            <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
-            <h3 id="monthYearLabel">Bulan Tahun</h3>
-            <button class="nav-btn" onclick="changeMonth(1)">›</button>
-          </div>
-
-          <div class="weekdays">
-            <div>MIN</div><div>SEN</div><div>SEL</div><div>RAB</div><div>KAM</div><div>JUM</div><div>SAB</div>
-          </div>
-
-          <div id="calendarDays" class="days-grid"></div>
+      <!-- Kalender Bulanan -->
+      <section class="card">
+        <div class="cal-header">
+          <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+          <h3 id="monthYearLabel">Bulan Tahun</h3>
+          <button class="nav-btn" onclick="changeMonth(1)">›</button>
         </div>
+
+        <div class="weekdays">
+          <div>MIN</div><div>SEN</div><div>SEL</div><div>RAB</div><div>KAM</div><div>JUM</div><div>SAB</div>
+        </div>
+
+        <div id="calendarDays" class="days-grid"></div>
 
         <div class="legend">
           <div class="legend-item"><span class="dot" style="background:#E11D48;"></span> Haid Tercatat</div>
@@ -497,10 +562,20 @@
         </div>
       </section>
 
+      <!-- Kartu Riwayat Bulanan -->
       <section class="card">
-        <div class="settings-title">
-          <span>Pengaturan Siklus & Alarm</span>
-          <span class="badge-offline">100% Offline</span>
+        <div class="section-title">
+          <span>📋 Riwayat Siklus Bulanan</span>
+          <span id="avgCycleBadge" class="badge-avg">Rata-rata: 28 Hr</span>
+        </div>
+        <div id="historyList" class="history-list"></div>
+      </section>
+
+      <!-- Pengaturan Siklus & Alarm -->
+      <section class="card">
+        <div class="section-title">
+          <span>⚙️ Pengaturan Siklus & Alarm</span>
+          <span class="badge-pill">100% Offline</span>
         </div>
 
         <div class="form-group">
@@ -529,6 +604,7 @@
     </main>
   </div>
 
+  <!-- Modal Detail Tanggal -->
   <div id="noteModal" class="modal-backdrop">
     <div class="modal-box">
       <div class="modal-header">
@@ -576,20 +652,120 @@
     let currentViewDate = new Date();
     let selectedDateKey = null;
 
+    const todayStr = formatDateKey(new Date());
     const defaultData = {
-      lastPeriod: formatDateKey(new Date()),
+      lastPeriod: todayStr,
       cycleLength: 28,
       periodDuration: 5,
       reminderTime: "08:00",
-      notes: {}
+      notes: {},
+      history: [{ startDate: todayStr, duration: 5 }]
     };
 
     let appData;
     try {
       const saved = JSON.parse(localStorage.getItem('lunacycle_data'));
-      appData = saved ? { ...defaultData, ...saved, notes: saved.notes || {} } : defaultData;
+      appData = saved ? {
+        ...defaultData,
+        ...saved,
+        notes: saved.notes || {},
+        history: Array.isArray(saved.history) && saved.history.length > 0
+          ? saved.history
+          : [{ startDate: saved.lastPeriod || todayStr, duration: saved.periodDuration || 5 }]
+      } : defaultData;
     } catch (e) {
       appData = defaultData;
+    }
+
+    function persistData() {
+      localStorage.setItem('lunacycle_data', JSON.stringify(appData));
+    }
+
+    // Tambahkan / perbarui catatan riwayat bulanan otomatis
+    function recordToHistory(startDateStr, durationDays) {
+      const existingIdx = appData.history.findIndex(item => item.startDate === startDateStr);
+      if (existingIdx >= 0) {
+        appData.history[existingIdx].duration = durationDays;
+      } else {
+        appData.history.push({ startDate: startDateStr, duration: durationDays });
+      }
+      // Urutkan dari tanggal terbaru ke terlama
+      appData.history.sort((a, b) => b.startDate.localeCompare(a.startDate));
+      appData.lastPeriod = appData.history[0].startDate;
+      document.getElementById('lastPeriodInput').value = appData.lastPeriod;
+    }
+
+    function deleteHistoryItem(startDateStr) {
+      if (appData.history.length <= 1) {
+        alert("Minimal harus ada 1 catatan tanggal haid terakhir.");
+        return;
+      }
+      if (confirm("Hapus catatan riwayat tanggal ini?")) {
+        appData.history = appData.history.filter(item => item.startDate !== startDateStr);
+        appData.lastPeriod = appData.history[0].startDate;
+        document.getElementById('lastPeriodInput').value = appData.lastPeriod;
+        persistData();
+        renderHistory();
+        renderCalendar();
+        updateDashboard();
+      }
+    }
+
+    function renderHistory() {
+      const container = document.getElementById('historyList');
+      const avgBadge = document.getElementById('avgCycleBadge');
+
+      if (!appData.history || appData.history.length === 0) {
+        container.innerHTML = `<div class="empty-history">Belum ada riwayat siklus tercatat.</div>`;
+        return;
+      }
+
+      // Hitung jarak siklus antar bulan
+      let totalDiff = 0;
+      let countDiff = 0;
+      let html = '';
+
+      appData.history.forEach((item, index) => {
+        const currentStart = parseLocalDate(item.startDate);
+        const formattedDate = currentStart.toLocaleDateString('id-ID', {
+          day: 'numeric', month: 'long', year: 'numeric'
+        });
+
+        let cycleInfo = `Durasi ${item.duration || appData.periodDuration} hari`;
+        let badgeText = "Tercatat";
+
+        if (index < appData.history.length - 1) {
+          const prevStart = parseLocalDate(appData.history[index + 1].startDate);
+          const diffDays = Math.round((currentStart - prevStart) / (1000 * 60 * 60 * 24));
+          if (diffDays > 0) {
+            totalDiff += diffDays;
+            countDiff++;
+            badgeText = `Siklus ${diffDays} hr`;
+          }
+        }
+
+        html += `
+          <div class="history-item">
+            <div class="history-left">
+              <strong>🩸 ${formattedDate}</strong>
+              <span>${cycleInfo}</span>
+            </div>
+            <div class="history-right">
+              <span class="cycle-tag">${badgeText}</span>
+              <button class="btn-del-hist" onclick="deleteHistoryItem('${item.startDate}')" title="Hapus">&times;</button>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+
+      if (countDiff > 0) {
+        const avg = Math.round(totalDiff / countDiff);
+        avgBadge.textContent = `Rata-rata: ${avg} Hr`;
+      } else {
+        avgBadge.textContent = `Setelan: ${appData.cycleLength} Hr`;
+      }
     }
 
     function getLocalNotifPlugin() {
@@ -644,7 +820,7 @@
       try {
         const granted = await requestAllPermissions();
         if (!granted) {
-          alert("Izin notifikasi belum diizinkan. Ketuk Izinkan saat diminta atau aktifkan di Pengaturan HP.");
+          alert("Izin notifikasi belum diizinkan. Aktifkan di Pengaturan HP.");
           return;
         }
 
@@ -652,7 +828,7 @@
           notifications: [{
             id: Math.floor(Math.random() * 10000) + 1000,
             title: "LunaCycle Pengingat 🌸",
-            body: "Notifikasi HP berhasil aktif! Pengingat haid & masa subur siap berjalan.",
+            body: "Notifikasi HP aktif! Pengingat haid & masa subur siap berjalan otomatis.",
             channelId: CHANNEL_ID,
             schedule: { at: new Date(Date.now() + 1500), allowWhileIdle: true }
           }]
@@ -768,6 +944,16 @@
       scheduleCycleNotifications(nextPeriod, ovulation);
     }
 
+    // Cek apakah tanggal masuk dalam riwayat haid yang pernah dicatat
+    function isDateInPeriodHistory(cellDate) {
+      return appData.history.some(item => {
+        const hStart = parseLocalDate(item.startDate);
+        const hEnd = new Date(hStart);
+        hEnd.setDate(hStart.getDate() + (Number(item.duration) || Number(appData.periodDuration) || 5) - 1);
+        return cellDate >= hStart && cellDate <= hEnd;
+      });
+    }
+
     function renderCalendar() {
       const year = currentViewDate.getFullYear();
       const month = currentViewDate.getMonth();
@@ -779,7 +965,7 @@
       const grid = document.getElementById('calendarDays');
       grid.innerHTML = '';
 
-      const { start, nextPeriod, ovulation, fertileStart, fertileEnd, periodDur } = calculateCycleData();
+      const { nextPeriod, ovulation, fertileStart, fertileEnd, periodDur } = calculateCycleData();
       const todayKey = formatDateKey(new Date());
 
       for (let i = 0; i < firstDay; i++) {
@@ -791,13 +977,10 @@
         const key = formatDateKey(cellDate);
         let phaseClass = "";
 
-        const periodEnd = new Date(start);
-        periodEnd.setDate(start.getDate() + periodDur - 1);
-
         const nextPeriodEnd = new Date(nextPeriod);
         nextPeriodEnd.setDate(nextPeriod.getDate() + periodDur - 1);
 
-        if (cellDate >= start && cellDate <= periodEnd) {
+        if (isDateInPeriodHistory(cellDate)) {
           phaseClass = "phase-period";
         } else if (cellDate >= nextPeriod && cellDate <= nextPeriodEnd) {
           phaseClass = "phase-predicted";
@@ -825,15 +1008,17 @@
     }
 
     function saveSettingsAndSchedule() {
-      appData.lastPeriod = document.getElementById('lastPeriodInput').value || formatDateKey(new Date());
+      const newStart = document.getElementById('lastPeriodInput').value || formatDateKey(new Date());
       appData.cycleLength = Number(document.getElementById('cycleLengthInput').value) || 28;
       appData.periodDuration = Number(document.getElementById('periodDurationInput').value) || 5;
       appData.reminderTime = document.getElementById('reminderTimeInput').value || "08:00";
 
-      localStorage.setItem('lunacycle_data', JSON.stringify(appData));
+      recordToHistory(newStart, appData.periodDuration);
+      persistData();
+      renderHistory();
       updateDashboard();
       renderCalendar();
-      alert("Pengaturan disimpan & jadwal notifikasi HP diperbarui!");
+      alert("Tersimpan ke riwayat & jadwal notifikasi HP diperbarui!");
     }
 
     function openNoteModal(dateKey) {
@@ -858,16 +1043,16 @@
       } else {
         appData.notes[selectedDateKey] = { mood, text };
       }
-      localStorage.setItem('lunacycle_data', JSON.stringify(appData));
+      persistData();
       closeModal();
       renderCalendar();
     }
 
     function setAsPeriodStart() {
-      appData.lastPeriod = selectedDateKey;
-      document.getElementById('lastPeriodInput').value = selectedDateKey;
-      localStorage.setItem('lunacycle_data', JSON.stringify(appData));
+      recordToHistory(selectedDateKey, Number(appData.periodDuration) || 5);
+      persistData();
       closeModal();
+      renderHistory();
       updateDashboard();
       renderCalendar();
     }
@@ -877,6 +1062,7 @@
     document.getElementById('periodDurationInput').value = appData.periodDuration;
     document.getElementById('reminderTimeInput').value = appData.reminderTime;
 
+    renderHistory();
     renderCalendar();
     updateDashboard();
     requestAllPermissions();

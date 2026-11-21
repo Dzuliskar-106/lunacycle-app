@@ -24,12 +24,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-     - name: Install dependencies & Add Android platform
-     run: |
-       npm init -y
-       npm install @capacitor/core@^6.0.0 @capacitor/cli@^6.0.0 @capacitor/android@^6.0.0 @capacitor/local-notifications@^6.0.0
-       npx cap add android
-       npx cap sync android
+      - name: Install dependencies & Add Android platform
+        run: |
+          npm init -y
+          npm install @capacitor/core@^6.0.0 @capacitor/cli@^6.0.0 @capacitor/android@^6.0.0 @capacitor/local-notifications@^6.0.0
+          npx cap add android
+          npx cap sync android
 
       - name: Generate Launcher Icon & Universal Notification SmallIcon
         run: |
@@ -39,7 +39,6 @@ jobs:
           import os, shutil
 
           size = 512
-          # 1. Buat Ikon Utama Aplikasi (Berwarna)
           img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
           draw = ImageDraw.Draw(img)
 
@@ -81,7 +80,6 @@ jobs:
                   resized.save(os.path.join(target_dir, "ic_launcher_round.png"))
                   resized.save(os.path.join(target_dir, "ic_launcher_foreground.png"))
 
-          # 2. Buat Ikon Notifikasi Siluet Putih Transparan (Wajib untuk semua versi Android)
           notif_size = 96
           n_img = Image.new("RGBA", (notif_size, notif_size), (0, 0, 0, 0))
           n_draw = ImageDraw.Draw(n_img)
@@ -89,7 +87,6 @@ jobs:
           nr = 24
           n_draw.ellipse([ncx - nr, ncy - nr, ncx + nr, ncy + nr], fill=(255, 255, 255, 255))
           n_draw.polygon([(ncx - nr + 2, ncy - 6), (ncx + nr - 2, ncy - 6), (ncx, 14)], fill=(255, 255, 255, 255))
-          # Potongan bulan sabit transparan di tengah tetesan
           n_draw.ellipse([ncx - 10, ncy - 6, ncx + 10, ncy + 14], fill=(0, 0, 0, 0))
           n_draw.ellipse([ncx - 4, ncy - 9, ncx + 14, ncy + 9], fill=(255, 255, 255, 255))
 

@@ -558,6 +558,8 @@
   </div>
 
   <script>
+    const CHANNEL_ID = "lunacycle_high_priority";
+
     function formatDateKey(dateObj) {
       const y = dateObj.getFullYear();
       const m = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -599,45 +601,73 @@
       return null;
     }
 
-    async function requestNotifPermission() {
+    async function setupNotificationChannel() {
+      const LocalNotifications = getLocalNotifPlugin();
+      if (!LocalNotifications) return;
+
       try {
-        const LocalNotifications = getLocalNotifPlugin();
-        if (LocalNotifications) {
-          const perm = await LocalNotifications.requestPermissions();
-          return perm.display === 'granted';
-        }
+        await LocalNotifications.createChannel({
+          id: CHANNEL_ID,
+          name: "Pengingat Siklus LunaCycle",
+          description: "Notifikasi jadwal haid, masa subur, dan ovulasi",
+          importance: 5,
+          visibility: 1,
+          vibration: true
+        });
       } catch (e) {}
-      return false;
+    }
+
+    async function requestAllPermissions() {
+      const LocalNotifications = getLocalNotifPlugin();
+      if (!LocalNotifications) return false;
+
+      try {
+        await setupNotificationChannel();
+        const status = await LocalNotifications.checkPermissions();
+        if (status.display !== 'granted') {
+          const req = await LocalNotifications.requestPermissions();
+          if (req.display !== 'granted') return false;
+        }
+        return true;
+      } catch (e) {
+        return false;
+      }
     }
 
     async function testNativeNotification() {
+      const LocalNotifications = getLocalNotifPlugin();
+      if (!LocalNotifications) {
+        alert("Plugin notifikasi tidak terdeteksi.");
+        return;
+      }
+
       try {
-        const granted = await requestNotifPermission();
-        const LocalNotifications = getLocalNotifPlugin();
-        if (LocalNotifications && granted) {
-          await LocalNotifications.schedule({
-            notifications: [{
-              title: "LunaCycle Pengingat 🌸",
-              body: "Notifikasi offline HP aktif! Pengingat haid & masa subur berjalan otomatis.",
-              id: 999,
-              schedule: { at: new Date(Date.now() + 2000) }
-            }]
-          });
-          alert("Notifikasi tes akan muncul di bilah atas HP dalam 2 detik!");
-        } else {
-          alert("Pastikan izin notifikasi untuk LunaCycle diaktifkan di Pengaturan HP.");
+        const granted = await requestAllPermissions();
+        if (!granted) {
+          alert("Izin notifikasi belum diizinkan. Ketuk Izinkan saat diminta atau aktifkan di Pengaturan HP.");
+          return;
         }
-      } catch (e) {
-        alert("Gagal memicu notifikasi: " + e.message);
+
+        await LocalNotifications.schedule({
+          notifications: [{
+            id: Math.floor(Math.random() * 10000) + 1000,
+            title: "LunaCycle Pengingat 🌸",
+            body: "Notifikasi HP berhasil aktif! Pengingat haid & masa subur siap berjalan.",
+            channelId: CHANNEL_ID,
+            schedule: { at: new Date(Date.now() + 1500), allowWhileIdle: true }
+          }]
+        });
+      } catch (err) {
+        alert("Gagal menjadwalkan notifikasi: " + err.message);
       }
     }
 
     async function scheduleCycleNotifications(nextPeriodDate, ovulationDate) {
-      try {
-        const LocalNotifications = getLocalNotifPlugin();
-        if (!LocalNotifications) return;
+      const LocalNotifications = getLocalNotifPlugin();
+      if (!LocalNotifications) return;
 
-        const granted = await requestNotifPermission();
+      try {
+        const granted = await requestAllPermissions();
         if (!granted) return;
 
         try {
@@ -656,6 +686,7 @@
             id: 101,
             title: "Persiapan Haid (H-2) 🌷",
             body: "Perkiraan haid 2 hari lagi. Siapkan pembalut & jaga istirahat ya!",
+            channelId: CHANNEL_ID,
             schedule: { at: pmsDate, allowWhileIdle: true }
           });
         }
@@ -667,6 +698,7 @@
             id: 102,
             title: "Perkiraan Haid Hari Ini 🩸",
             body: "Hari ini perkiraan hari pertama haidmu. Ketuk untuk mencatat di LunaCycle.",
+            channelId: CHANNEL_ID,
             schedule: { at: startNotif, allowWhileIdle: true }
           });
         }
@@ -678,6 +710,7 @@
             id: 103,
             title: "Puncak Masa Subur (Ovulasi) 💜",
             body: "Hari ini adalah puncak masa subur dalam siklus bulananmu.",
+            channelId: CHANNEL_ID,
             schedule: { at: ovulNotif, allowWhileIdle: true }
           });
         }
@@ -839,7 +872,6 @@
       renderCalendar();
     }
 
-    // Inisialisasi langsung render UI terlebih dahulu sebelum izin notif
     document.getElementById('lastPeriodInput').value = appData.lastPeriod;
     document.getElementById('cycleLengthInput').value = appData.cycleLength;
     document.getElementById('periodDurationInput').value = appData.periodDuration;
@@ -847,7 +879,7 @@
 
     renderCalendar();
     updateDashboard();
-    requestNotifPermission();
+    requestAllPermissions();
   </script>
 </body>
 </html>

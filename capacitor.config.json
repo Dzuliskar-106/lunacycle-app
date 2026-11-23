@@ -10,6 +10,14 @@
       "smallIcon": "ic_stat_lunacycle",
       "iconColor": "#E11D48",
       "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "launchAutoHide": true,
+      "backgroundColor": "#E11D48",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false
     }
   }
 }

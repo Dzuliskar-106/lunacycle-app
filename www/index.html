@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>LunaCycle - Kalender & Riwayat Siklus</title>
+  <title>LunaCycle - Kalender & Pelacak Siklus</title>
   <style>
     :root {
       --bg: #FDF7F9;
@@ -13,6 +13,8 @@
       --primary-dark: #9F1239;
       --purple: #7E22CE;
       --purple-light: #F3E8FF;
+      --teal: #0D9488;
+      --teal-light: #CCFBF1;
       --text-main: #271E2B;
       --text-muted: #6E6275;
       --border: #F3E1E7;
@@ -34,11 +36,61 @@
       overflow-x: hidden;
     }
 
+    /* Full Screen Custom Web Splash Overlay */
+    #customSplash {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(160deg, #E11D48 0%, #9333EA 100%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      transition: opacity 0.45s ease, visibility 0.45s ease;
+    }
+
+    #customSplash.hide {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .splash-circle {
+      width: 112px;
+      height: 112px;
+      border-radius: 32px;
+      background: rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+      animation: pulseLogo 1.4s infinite ease-in-out;
+    }
+
+    @keyframes pulseLogo {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+    }
+
+    #customSplash h1 {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+    }
+
+    #customSplash p {
+      font-size: 13px;
+      opacity: 0.9;
+      margin-top: 4px;
+    }
+
     .app-shell {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      padding-bottom: 24px;
+      padding-bottom: 28px;
     }
 
     header {
@@ -291,7 +343,6 @@
       display: inline-block;
     }
 
-    /* Section Header */
     .section-title {
       font-size: 15px;
       font-weight: 800;
@@ -317,6 +368,34 @@
       padding: 3px 9px;
       border-radius: 99px;
       font-weight: 700;
+    }
+
+    /* Statistik Gejala */
+    .symptom-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .symptom-chip {
+      background: #FDF4F7;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .symptom-count {
+      background: var(--primary);
+      color: #FFFFFF;
+      font-size: 11px;
+      padding: 1px 7px;
+      border-radius: 99px;
     }
 
     /* Riwayat Bulanan */
@@ -374,11 +453,78 @@
       cursor: pointer;
     }
 
-    .empty-history {
+    .empty-text {
       text-align: center;
       font-size: 12px;
       color: var(--text-muted);
-      padding: 14px 8px;
+      padding: 10px 6px;
+    }
+
+    /* Toggle Pengingat Minum Air */
+    .water-box {
+      background: #F0FDFA;
+      border: 1px solid #99F6E4;
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .water-info strong {
+      display: block;
+      font-size: 13px;
+      color: #0F766E;
+    }
+
+    .water-info span {
+      font-size: 11px;
+      color: #115E59;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #CBD5E1;
+      transition: .3s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--teal);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(22px);
     }
 
     /* Form Pengaturan */
@@ -391,7 +537,7 @@
       margin-bottom: 10px;
     }
 
-    label {
+    label.field-label {
       display: block;
       font-size: 12px;
       font-weight: 700;
@@ -399,7 +545,7 @@
       margin-bottom: 4px;
     }
 
-    input, select, textarea {
+    input[type="date"], input[type="number"], input[type="time"], select, textarea {
       width: 100%;
       padding: 11px 12px;
       border-radius: 13px;
@@ -479,10 +625,10 @@
       color: var(--text-main);
     }
 
-    .modal-actions {
+    .modal-period-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 8px;
       margin-top: 12px;
     }
 
@@ -490,13 +636,25 @@
       background: var(--primary-light);
       color: var(--primary-dark);
       border: none;
-      padding: 12px;
+      padding: 11px 8px;
       border-radius: 13px;
-      font-size: 13px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .btn-period-end {
+      background: var(--teal-light);
+      color: #0F766E;
+      border: none;
+      padding: 11px 8px;
+      border-radius: 13px;
+      font-size: 12px;
       font-weight: 800;
     }
 
     .btn-note-save {
+      width: 100%;
+      margin-top: 8px;
       background: var(--purple);
       color: #FFFFFF;
       border: none;
@@ -508,6 +666,18 @@
   </style>
 </head>
 <body>
+  <!-- Custom Full-Screen Splash Overlay -->
+  <div id="customSplash">
+    <div class="splash-circle">
+      <svg width="58" height="58" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2.5C12 2.5 6 9.2 6 14C6 17.3137 8.68629 20 12 20C15.3137 20 18 17.3137 18 14C18 9.2 12 2.5 12 2.5Z" fill="#FFFFFF"/>
+        <path d="M13.5 11.5C12.2 11.5 11.2 12.5 11.2 13.8C11.2 15.1 12.2 16.1 13.5 16.1C14.1 16.1 14.6 15.9 15 15.5C14.1 15.4 13.4 14.7 13.4 13.8C13.4 12.9 14.1 12.2 15 12.1C14.6 11.7 14.1 11.5 13.5 11.5Z" fill="#E11D48"/>
+      </svg>
+    </div>
+    <h1>LunaCycle</h1>
+    <p>Kalender & Pelacak Siklus Perempuan</p>
+  </div>
+
   <div class="app-shell">
     <header>
       <div class="header-top">
@@ -562,6 +732,15 @@
         </div>
       </section>
 
+      <!-- Statistik Kondisi & Gejala -->
+      <section class="card">
+        <div class="section-title">
+          <span>📊 Statistik Kondisi & Gejala</span>
+          <span id="totalNotesBadge" class="badge-avg">0 Catatan</span>
+        </div>
+        <div id="symptomStatsContainer" class="symptom-chips"></div>
+      </section>
+
       <!-- Kartu Riwayat Bulanan -->
       <section class="card">
         <div class="section-title">
@@ -574,28 +753,40 @@
       <!-- Pengaturan Siklus & Alarm -->
       <section class="card">
         <div class="section-title">
-          <span>⚙️ Pengaturan Siklus & Alarm</span>
+          <span>⚙️ Pengaturan Siklus & Pengingat</span>
           <span class="badge-pill">100% Offline</span>
         </div>
 
+        <!-- Pengingat Minum Air & Suplemen -->
+        <div class="water-box">
+          <div class="water-info">
+            <strong>💧 Pengingat Minum Air & Vitamin</strong>
+            <span>Notif setiap 3 jam (08:00 - 20:00) selama masa haid</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="waterReminderToggle" onchange="toggleWaterReminder()" />
+            <span class="slider"></span>
+          </label>
+        </div>
+
         <div class="form-group">
-          <label>Hari Pertama Haid Terakhir</label>
+          <label class="field-label">Hari Pertama Haid Terakhir</label>
           <input type="date" id="lastPeriodInput" />
         </div>
 
         <div class="form-row">
           <div>
-            <label>Siklus (Hari)</label>
+            <label class="field-label">Siklus (Hari)</label>
             <input type="number" id="cycleLengthInput" min="20" max="45" value="28" />
           </div>
           <div>
-            <label>Lama Haid (Hari)</label>
+            <label class="field-label">Lama Haid (Hari)</label>
             <input type="number" id="periodDurationInput" min="2" max="10" value="5" />
           </div>
         </div>
 
         <div class="form-group">
-          <label>Jam Pengingat Notifikasi HP</label>
+          <label class="field-label">Jam Pengingat Notifikasi Haid</label>
           <input type="time" id="reminderTimeInput" value="08:00" />
         </div>
 
@@ -612,29 +803,39 @@
         <button class="btn-close" onclick="closeModal()">&times;</button>
       </div>
       <div class="form-group">
-        <label>Kondisi / Gejala Hari Ini</label>
+        <label class="field-label">Kondisi / Gejala Hari Ini</label>
         <select id="moodSelect">
           <option value="">-- Pilih gejala --</option>
           <option value="Kram Perut">😣 Kram Perut</option>
           <option value="Mood Swing">🥺 Mood Swing / Sensitif</option>
           <option value="Nyeri Payudara">😫 Nyeri Payudara</option>
           <option value="Lelah / Mengantuk">😴 Lelah / Mengantuk</option>
+          <option value="Sakit Kepala">🤕 Sakit Kepala / Pusing</option>
           <option value="Fit & Nyaman">😊 Fit & Nyaman</option>
         </select>
       </div>
       <div class="form-group">
-        <label>Catatan Pribadi</label>
+        <label class="field-label">Catatan Pribadi</label>
         <textarea id="noteText" rows="2" placeholder="Tulis catatan singkat di sini..."></textarea>
       </div>
-      <div class="modal-actions">
+      <div class="modal-period-actions">
         <button class="btn-period-set" onclick="setAsPeriodStart()">🩸 Tandai Mulai Haid</button>
-        <button class="btn-note-save" onclick="saveDailyNote()">Simpan Catatan</button>
+        <button class="btn-period-end" onclick="setAsPeriodEnd()">✅ Tandai Selesai Haid</button>
       </div>
+      <button class="btn-note-save" onclick="saveDailyNote()">Simpan Catatan Gejala</button>
     </div>
   </div>
 
   <script>
     const CHANNEL_ID = "lunacycle_high_priority";
+
+    // Sembunyikan custom splash screen setelah siap
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        const splash = document.getElementById('customSplash');
+        if (splash) splash.classList.add('hide');
+      }, 950);
+    });
 
     function formatDateKey(dateObj) {
       const y = dateObj.getFullYear();
@@ -658,8 +859,9 @@
       cycleLength: 28,
       periodDuration: 5,
       reminderTime: "08:00",
+      waterReminder: false,
       notes: {},
-      history: [{ startDate: todayStr, duration: 5 }]
+      history: [{ startDate: todayStr, duration: 5, isCompleted: false }]
     };
 
     let appData;
@@ -671,7 +873,7 @@
         notes: saved.notes || {},
         history: Array.isArray(saved.history) && saved.history.length > 0
           ? saved.history
-          : [{ startDate: saved.lastPeriod || todayStr, duration: saved.periodDuration || 5 }]
+          : [{ startDate: saved.lastPeriod || todayStr, duration: saved.periodDuration || 5, isCompleted: false }]
       } : defaultData;
     } catch (e) {
       appData = defaultData;
@@ -681,15 +883,14 @@
       localStorage.setItem('lunacycle_data', JSON.stringify(appData));
     }
 
-    // Tambahkan / perbarui catatan riwayat bulanan otomatis
-    function recordToHistory(startDateStr, durationDays) {
+    function recordToHistory(startDateStr, durationDays, isCompleted = false) {
       const existingIdx = appData.history.findIndex(item => item.startDate === startDateStr);
       if (existingIdx >= 0) {
         appData.history[existingIdx].duration = durationDays;
+        if (isCompleted) appData.history[existingIdx].isCompleted = true;
       } else {
-        appData.history.push({ startDate: startDateStr, duration: durationDays });
+        appData.history.push({ startDate: startDateStr, duration: durationDays, isCompleted });
       }
-      // Urutkan dari tanggal terbaru ke terlama
       appData.history.sort((a, b) => b.startDate.localeCompare(a.startDate));
       appData.lastPeriod = appData.history[0].startDate;
       document.getElementById('lastPeriodInput').value = appData.lastPeriod;
@@ -711,16 +912,54 @@
       }
     }
 
+    // Render Statistik Kondisi & Gejala
+    function renderSymptomStats() {
+      const container = document.getElementById('symptomStatsContainer');
+      const totalBadge = document.getElementById('totalNotesBadge');
+      const counts = {};
+      let totalNotes = 0;
+
+      Object.values(appData.notes).forEach(entry => {
+        if (entry && entry.mood) {
+          counts[entry.mood] = (counts[entry.mood] || 0) + 1;
+          totalNotes++;
+        }
+      });
+
+      totalBadge.textContent = `${totalNotes} Catatan`;
+
+      const sortedSymptoms = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      if (sortedSymptoms.length === 0) {
+        container.innerHTML = `<div class="empty-text" style="width:100%;">Ketuk tanggal di kalender untuk mulai mencatat kondisi atau gejala harian.</div>`;
+        return;
+      }
+
+      const emojiMap = {
+        "Kram Perut": "😣",
+        "Mood Swing": "🥺",
+        "Nyeri Payudara": "😫",
+        "Lelah / Mengantuk": "😴",
+        "Sakit Kepala": "🤕",
+        "Fit & Nyaman": "😊"
+      };
+
+      container.innerHTML = sortedSymptoms.map(([mood, count]) => `
+        <div class="symptom-chip">
+          <span>${emojiMap[mood] || "📝"} ${mood}</span>
+          <span class="symptom-count">${count}x</span>
+        </div>
+      `).join('');
+    }
+
     function renderHistory() {
       const container = document.getElementById('historyList');
       const avgBadge = document.getElementById('avgCycleBadge');
 
       if (!appData.history || appData.history.length === 0) {
-        container.innerHTML = `<div class="empty-history">Belum ada riwayat siklus tercatat.</div>`;
+        container.innerHTML = `<div class="empty-text">Belum ada riwayat siklus tercatat.</div>`;
         return;
       }
 
-      // Hitung jarak siklus antar bulan
       let totalDiff = 0;
       let countDiff = 0;
       let html = '';
@@ -731,7 +970,8 @@
           day: 'numeric', month: 'long', year: 'numeric'
         });
 
-        let cycleInfo = `Durasi ${item.duration || appData.periodDuration} hari`;
+        const dur = item.duration || appData.periodDuration;
+        const statusText = item.isCompleted ? `Selesai (${dur} hari)` : `Durasi ${dur} hari`;
         let badgeText = "Tercatat";
 
         if (index < appData.history.length - 1) {
@@ -748,7 +988,7 @@
           <div class="history-item">
             <div class="history-left">
               <strong>🩸 ${formattedDate}</strong>
-              <span>${cycleInfo}</span>
+              <span>${statusText}</span>
             </div>
             <div class="history-right">
               <span class="cycle-tag">${badgeText}</span>
@@ -785,7 +1025,7 @@
         await LocalNotifications.createChannel({
           id: CHANNEL_ID,
           name: "Pengingat Siklus LunaCycle",
-          description: "Notifikasi jadwal haid, masa subur, dan ovulasi",
+          description: "Notifikasi jadwal haid, masa subur, dan pengingat hidrasi",
           importance: 5,
           visibility: 1,
           vibration: true
@@ -828,13 +1068,70 @@
           notifications: [{
             id: Math.floor(Math.random() * 10000) + 1000,
             title: "LunaCycle Pengingat 🌸",
-            body: "Notifikasi HP aktif! Pengingat haid & masa subur siap berjalan otomatis.",
+            body: "Notifikasi HP aktif! Pengingat siklus & hidrasi siap berjalan.",
             channelId: CHANNEL_ID,
             schedule: { at: new Date(Date.now() + 1500), allowWhileIdle: true }
           }]
         });
       } catch (err) {
         alert("Gagal menjadwalkan notifikasi: " + err.message);
+      }
+    }
+
+    // Jadwalkan Pengingat Minum Air & Suplemen selama fase haid (ID 201..235)
+    async function scheduleWaterNotifications() {
+      const LocalNotifications = getLocalNotifPlugin();
+      if (!LocalNotifications) return;
+
+      // Bersihkan jadwal pengingat air lama
+      const oldIds = [];
+      for (let i = 201; i <= 240; i++) oldIds.push({ id: i });
+      try { await LocalNotifications.cancel({ notifications: oldIds }); } catch (e) {}
+
+      if (!appData.waterReminder) return;
+
+      const granted = await requestAllPermissions();
+      if (!granted) return;
+
+      const latestCycle = appData.history[0];
+      if (!latestCycle || latestCycle.isCompleted) return;
+
+      const start = parseLocalDate(latestCycle.startDate);
+      const dur = Number(latestCycle.duration) || Number(appData.periodDuration) || 5;
+      const now = new Date();
+      const hours = [8, 11, 14, 17, 20]; // Setiap 3 jam dari jam 08:00 - 20:00
+      const list = [];
+      let notifId = 201;
+
+      for (let d = 0; d < dur; d++) {
+        for (const h of hours) {
+          const target = new Date(start);
+          target.setDate(start.getDate() + d);
+          target.setHours(h, 0, 0, 0);
+
+          if (target > now && notifId <= 240) {
+            list.push({
+              id: notifId++,
+              title: "Waktunya Minum Air & Istirahat 💧",
+              body: "Jaga hidrasi tubuh & konsumsi vitamin/air hangat agar kram haid berkurang.",
+              channelId: CHANNEL_ID,
+              schedule: { at: target, allowWhileIdle: true }
+            });
+          }
+        }
+      }
+
+      if (list.length > 0) {
+        await LocalNotifications.schedule({ notifications: list });
+      }
+    }
+
+    async function toggleWaterReminder() {
+      appData.waterReminder = document.getElementById('waterReminderToggle').checked;
+      persistData();
+      await scheduleWaterNotifications();
+      if (appData.waterReminder) {
+        alert("Pengingat minum air & vitamin setiap 3 jam selama masa haid diaktifkan!");
       }
     }
 
@@ -894,6 +1191,7 @@
         if (list.length > 0) {
           await LocalNotifications.schedule({ notifications: list });
         }
+        await scheduleWaterNotifications();
       } catch (e) {}
     }
 
@@ -944,7 +1242,6 @@
       scheduleCycleNotifications(nextPeriod, ovulation);
     }
 
-    // Cek apakah tanggal masuk dalam riwayat haid yang pernah dicatat
     function isDateInPeriodHistory(cellDate) {
       return appData.history.some(item => {
         const hStart = parseLocalDate(item.startDate);
@@ -1013,12 +1310,12 @@
       appData.periodDuration = Number(document.getElementById('periodDurationInput').value) || 5;
       appData.reminderTime = document.getElementById('reminderTimeInput').value || "08:00";
 
-      recordToHistory(newStart, appData.periodDuration);
+      recordToHistory(newStart, appData.periodDuration, false);
       persistData();
       renderHistory();
       updateDashboard();
       renderCalendar();
-      alert("Tersimpan ke riwayat & jadwal notifikasi HP diperbarui!");
+      alert("Pengaturan tersimpan & jadwal notifikasi HP diperbarui!");
     }
 
     function openNoteModal(dateKey) {
@@ -1045,11 +1342,12 @@
       }
       persistData();
       closeModal();
+      renderSymptomStats();
       renderCalendar();
     }
 
     function setAsPeriodStart() {
-      recordToHistory(selectedDateKey, Number(appData.periodDuration) || 5);
+      recordToHistory(selectedDateKey, Number(appData.periodDuration) || 5, false);
       persistData();
       closeModal();
       renderHistory();
@@ -1057,11 +1355,49 @@
       renderCalendar();
     }
 
+    // Tandai Haid Selesai pada tanggal yang dipilih
+    function setAsPeriodEnd() {
+      const endDate = parseLocalDate(selectedDateKey);
+      // Cari siklus haid yang dimulai sebelum atau pada tanggal selesai ini
+      const targetCycle = appData.history.find(item => parseLocalDate(item.startDate) <= endDate);
+
+      if (!targetCycle) {
+        alert("Tanggal selesai tidak boleh lebih awal dari tanggal mulai haid.");
+        return;
+      }
+
+      const startDate = parseLocalDate(targetCycle.startDate);
+      const actualDuration = Math.round((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+
+      if (actualDuration < 1 || actualDuration > 15) {
+        alert("Rentang hari haid tidak valid (pastikan memilih tanggal akhir pada siklus bulan tersebut).");
+        return;
+      }
+
+      targetCycle.duration = actualDuration;
+      targetCycle.isCompleted = true;
+
+      // Jika ini siklus terbaru, perbarui juga durasi tampilan di form
+      if (targetCycle.startDate === appData.lastPeriod) {
+        appData.periodDuration = actualDuration;
+        document.getElementById('periodDurationInput').value = actualDuration;
+      }
+
+      persistData();
+      closeModal();
+      renderHistory();
+      updateDashboard();
+      renderCalendar();
+      alert(`Haid ditandai selesai! Durasi aktual tercatat: ${actualDuration} hari.`);
+    }
+
     document.getElementById('lastPeriodInput').value = appData.lastPeriod;
     document.getElementById('cycleLengthInput').value = appData.cycleLength;
     document.getElementById('periodDurationInput').value = appData.periodDuration;
     document.getElementById('reminderTimeInput').value = appData.reminderTime;
+    document.getElementById('waterReminderToggle').checked = Boolean(appData.waterReminder);
 
+    renderSymptomStats();
     renderHistory();
     renderCalendar();
     updateDashboard();

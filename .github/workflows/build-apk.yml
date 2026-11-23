@@ -1,4 +1,4 @@
-name: Build LunaCycle Universal Android APK
+name: Build LunaCycle V5 Android APK
 
 on:
   push:
@@ -27,21 +27,33 @@ jobs:
       - name: Install dependencies & Add Android platform
         run: |
           npm init -y
-          npm install @capacitor/core@^6.0.0 @capacitor/cli@^6.0.0 @capacitor/android@^6.0.0 @capacitor/local-notifications@^6.0.0
+          npm install @capacitor/core@^6.0.0 @capacitor/cli@^6.0.0 @capacitor/android@^6.0.0 @capacitor/local-notifications@^6.0.0 @capacitor/splash-screen@^6.0.0
           npx cap add android
           npx cap sync android
 
-      - name: Generate Launcher Icon & Universal Notification SmallIcon
+      - name: Generate Icon, Notification SmallIcon & Full-Screen Splash
         run: |
           pip install pillow
           python3 - << 'EOF'
           from PIL import Image, ImageDraw
           import os, shutil
 
+          res_dir = "android/app/src/main/res"
+
+          def draw_lunacycle_emblem(draw, cx, cy, scale=1.0):
+              r_drop = int(105 * scale)
+              top_y = int(cy - 175 * scale)
+              offset_y = int(28 * scale)
+              trim_x = int(6 * scale)
+              draw.ellipse([cx - r_drop, cy - r_drop, cx + r_drop, cy + r_drop], fill=(255, 255, 255, 255))
+              draw.polygon([(cx - r_drop + trim_x, cy - offset_y), (cx + r_drop - trim_x, cy - offset_y), (cx, top_y)], fill=(255, 255, 255, 255))
+              draw.ellipse([cx - int(48*scale), cy - int(32*scale), cx + int(48*scale), cy + int(64*scale)], fill=(225, 29, 72, 255))
+              draw.ellipse([cx - int(22*scale), cy - int(45*scale), cx + int(65*scale), cy + int(45*scale)], fill=(255, 255, 255, 255))
+
+          # 1. Ikon Aplikasi Utama (512x512)
           size = 512
           img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
           draw = ImageDraw.Draw(img)
-
           for y in range(size):
               r = int(225 - (y / size) * 78)
               g = int(29 + (y / size) * 22)
@@ -51,16 +63,8 @@ jobs:
           mask = Image.new("L", (size, size), 0)
           ImageDraw.Draw(mask).rounded_rectangle([0, 0, size, size], radius=115, fill=255)
           img.putalpha(mask)
+          draw_lunacycle_emblem(draw, 256, 285, 1.0)
 
-          cx, cy = 256, 285
-          r_drop = 105
-          draw.ellipse([cx - r_drop, cy - r_drop, cx + r_drop, cy + r_drop], fill=(255, 255, 255, 255))
-          draw.polygon([(cx - r_drop + 6, cy - 28), (cx + r_drop - 6, cy - 28), (cx, 110)], fill=(255, 255, 255, 255))
-
-          draw.ellipse([cx - 48, cy - 32, cx + 48, cy + 64], fill=(225, 29, 72, 255))
-          draw.ellipse([cx - 22, cy - 45, cx + 65, cy + 45], fill=(255, 255, 255, 255))
-
-          res_dir = "android/app/src/main/res"
           anydpi_dir = os.path.join(res_dir, "mipmap-anydpi-v26")
           if os.path.exists(anydpi_dir):
               shutil.rmtree(anydpi_dir)
@@ -80,11 +84,11 @@ jobs:
                   resized.save(os.path.join(target_dir, "ic_launcher_round.png"))
                   resized.save(os.path.join(target_dir, "ic_launcher_foreground.png"))
 
+          # 2. Ikon Notifikasi Siluet Putih Monokrom
           notif_size = 96
           n_img = Image.new("RGBA", (notif_size, notif_size), (0, 0, 0, 0))
           n_draw = ImageDraw.Draw(n_img)
-          ncx, ncy = 48, 55
-          nr = 24
+          ncx, ncy, nr = 48, 55, 24
           n_draw.ellipse([ncx - nr, ncy - nr, ncx + nr, ncy + nr], fill=(255, 255, 255, 255))
           n_draw.polygon([(ncx - nr + 2, ncy - 6), (ncx + nr - 2, ncy - 6), (ncx, 14)], fill=(255, 255, 255, 255))
           n_draw.ellipse([ncx - 10, ncy - 6, ncx + 10, ncy + 14], fill=(0, 0, 0, 0))
@@ -93,12 +97,52 @@ jobs:
           drawable_dir = os.path.join(res_dir, "drawable")
           os.makedirs(drawable_dir, exist_ok=True)
           n_img.save(os.path.join(drawable_dir, "ic_stat_lunacycle.png"))
+
+          # 3. Full-Screen Splash Screen (1080x1920)
+          sw, sh = 1080, 1920
+          splash = Image.new("RGBA", (sw, sh), (225, 29, 72, 255))
+          s_draw = ImageDraw.Draw(splash)
+          for y in range(sh):
+              r = int(225 - (y / sh) * 78)
+              g = int(29 + (y / sh) * 22)
+              b = int(72 + (y / sh) * 162)
+              s_draw.line([(0, y), (sw, y)], fill=(r, g, b, 255))
+
+          # Lingkaran lembut di belakang emblem splash
+          s_draw.ellipse([sw//2 - 220, sh//2 - 220, sw//2 + 220, sh//2 + 220], fill=(255, 255, 255, 35))
+          draw_lunacycle_emblem(s_draw, sw // 2, sh // 2 + 25, 1.45)
+
+          splash.save(os.path.join(drawable_dir, "splash.png"))
+          for root, dirs, files in os.walk(res_dir):
+              if "splash.png" in files:
+                  splash.save(os.path.join(root, "splash.png"))
           EOF
 
-      - name: Add Universal Notification Permissions to AndroidManifest
+      - name: Configure Full-Screen Splash & Permissions in AndroidManifest
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           sed -i 's/<uses-permission android:name="android.permission.INTERNET" \/>/<uses-permission android:name="android.permission.INTERNET" \/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" \/>\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" \/>\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" \/>\n    <uses-permission android:name="android.permission.WAKE_LOCK" \/>\n    <uses-permission android:name="android.permission.VIBRATE" \/>\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" \/>/' $MANIFEST
+
+          STYLES="android/app/src/main/res/values/styles.xml"
+          cat << 'EOF' > $STYLES
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+                  <item name="colorPrimary">#E11D48</item>
+                  <item name="colorPrimaryDark">#BE123C</item>
+                  <item name="colorAccent">#9333EA</item>
+              </style>
+              <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
+                  <item name="windowActionBar">false</item>
+                  <item name="windowNoTitle">true</item>
+                  <item name="android:background">#E11D48</item>
+              </style>
+              <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+                  <item name="android:background">@drawable/splash</item>
+                  <item name="android:windowFullscreen">true</item>
+              </style>
+          </resources>
+          EOF
 
       - name: Build Debug APK
         run: |
@@ -109,5 +153,5 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LunaCycle-Universal-APK
+          name: LunaCycle-APK-V5
           path: android/app/build/outputs/apk/debug/app-debug.apk

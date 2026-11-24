@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>LunaCycle - Kalender & Pelacak Siklus</title>
+  <title>LunaCycle - Pelacak Siklus</title>
   <style>
     :root {
-      --bg: #FDF7F9;
+      --bg: #FAF5F8;
       --surface: #FFFFFF;
       --primary: #E11D48;
-      --primary-light: #FFE4E6;
+      --primary-soft: #FFE4E6;
       --primary-dark: #9F1239;
       --purple: #7E22CE;
-      --purple-light: #F3E8FF;
+      --purple-soft: #F3E8FF;
       --teal: #0D9488;
-      --teal-light: #CCFBF1;
-      --text-main: #271E2B;
-      --text-muted: #6E6275;
-      --border: #F3E1E7;
+      --teal-soft: #CCFBF1;
+      --text-main: #241929;
+      --text-muted: #706277;
+      --border: #F1E2E8;
     }
 
     * {
@@ -36,70 +36,108 @@
       overflow-x: hidden;
     }
 
-    /* Full Screen Custom Web Splash Overlay */
-    #customSplash {
+    /* ================= SPLASH SCREEN ANIMATION ================= */
+    #splashScreen {
       position: fixed;
       inset: 0;
-      background: linear-gradient(160deg, #E11D48 0%, #9333EA 100%);
+      background: linear-gradient(155deg, #E11D48 0%, #9333EA 55%, #6B21A8 100%);
       z-index: 9999;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       color: #FFFFFF;
-      transition: opacity 0.45s ease, visibility 0.45s ease;
+      overflow: hidden;
+      transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.5s;
     }
 
-    #customSplash.hide {
+    #splashScreen.fade-out {
       opacity: 0;
+      transform: scale(1.06);
       visibility: hidden;
       pointer-events: none;
     }
 
-    .splash-circle {
-      width: 112px;
-      height: 112px;
-      border-radius: 32px;
-      background: rgba(255, 255, 255, 0.2);
+    .splash-rings {
+      position: relative;
+      width: 130px;
+      height: 130px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 18px;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-      animation: pulseLogo 1.4s infinite ease-in-out;
+      margin-bottom: 20px;
     }
 
-    @keyframes pulseLogo {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.06); }
+    .ring-wave {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      animation: rippleWave 1.8s infinite ease-out;
     }
 
-    #customSplash h1 {
+    .ring-wave:nth-child(2) {
+      animation-delay: 0.6s;
+    }
+
+    @keyframes rippleWave {
+      0% { transform: scale(0.75); opacity: 0.9; }
+      100% { transform: scale(1.45); opacity: 0; }
+    }
+
+    .splash-emblem {
+      width: 96px;
+      height: 96px;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+      border: 1.5px solid rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.2);
+      animation: popFloat 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes popFloat {
+      0% { transform: scale(0.5) translateY(18px); opacity: 0; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    .splash-title {
       font-size: 28px;
       font-weight: 900;
-      letter-spacing: -0.5px;
+      letter-spacing: -0.4px;
+      animation: fadeSlideText 0.7s 0.2s both ease-out;
     }
 
-    #customSplash p {
+    .splash-sub {
       font-size: 13px;
       opacity: 0.9;
       margin-top: 4px;
+      animation: fadeSlideText 0.7s 0.35s both ease-out;
     }
 
+    @keyframes fadeSlideText {
+      0% { transform: translateY(10px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+    /* ================= MAIN APP LAYOUT ================= */
     .app-shell {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      padding-bottom: 28px;
+      padding-bottom: 84px; /* Ruang untuk Bottom Nav */
     }
 
     header {
       background: linear-gradient(135deg, #E11D48 0%, #9333EA 100%);
       color: #FFFFFF;
-      padding: calc(env(safe-area-inset-top, 16px) + 14px) 18px 22px 18px;
-      border-bottom-left-radius: 26px;
-      border-bottom-right-radius: 26px;
-      box-shadow: 0 6px 20px rgba(225, 29, 72, 0.22);
+      padding: calc(env(safe-area-inset-top, 14px) + 12px) 16px 20px 16px;
+      border-bottom-left-radius: 28px;
+      border-bottom-right-radius: 28px;
+      box-shadow: 0 8px 24px rgba(225, 29, 72, 0.2);
     }
 
     .header-top {
@@ -118,7 +156,7 @@
     .brand-logo {
       width: 36px;
       height: 36px;
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.22);
       border-radius: 12px;
       display: flex;
       align-items: center;
@@ -140,9 +178,9 @@
       background: rgba(255, 255, 255, 0.22);
       border: 1px solid rgba(255, 255, 255, 0.35);
       color: #FFFFFF;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
-      padding: 8px 12px;
+      padding: 7px 12px;
       border-radius: 12px;
       cursor: pointer;
     }
@@ -151,18 +189,20 @@
 
     .status-banner {
       background: rgba(255, 255, 255, 0.16);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 18px;
-      padding: 12px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 20px;
+      padding: 13px 15px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 10px;
     }
 
     .status-info span.label {
-      font-size: 11px;
+      font-size: 10px;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
       opacity: 0.85;
     }
 
@@ -180,11 +220,12 @@
     .countdown-box {
       background: #FFFFFF;
       color: var(--primary);
-      border-radius: 14px;
-      padding: 8px 14px;
+      border-radius: 16px;
+      padding: 8px 13px;
       text-align: center;
       min-width: 72px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      flex-shrink: 0;
     }
 
     .countdown-box strong {
@@ -195,27 +236,79 @@
     }
 
     .countdown-box small {
-      font-size: 10px;
-      font-weight: 700;
+      font-size: 9px;
+      font-weight: 800;
       text-transform: uppercase;
     }
 
+    /* ================= TAB VIEWS ================= */
     main {
       flex: 1;
-      padding: 12px;
-      display: flex;
+      padding: 14px;
+    }
+
+    .tab-pane {
+      display: none;
       flex-direction: column;
       gap: 12px;
+      animation: tabFadeIn 0.22s ease-out;
+    }
+
+    .tab-pane.active {
+      display: flex;
+    }
+
+    @keyframes tabFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .card {
       background: var(--surface);
-      border-radius: 24px;
+      border-radius: 22px;
       padding: 16px;
       border: 1px solid var(--border);
-      box-shadow: 0 2px 12px rgba(39, 30, 43, 0.04);
+      box-shadow: 0 3px 14px rgba(36, 25, 41, 0.035);
     }
 
+    /* Fase Tubuh & Tips Harian Card */
+    .phase-insight-card {
+      background: linear-gradient(135deg, #FFF5F7 0%, #F8F3FF 100%);
+      border: 1px solid #F3D8E6;
+      border-radius: 20px;
+      padding: 13px 15px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .phase-icon-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 13px;
+      background: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      box-shadow: 0 3px 8px rgba(225, 29, 72, 0.1);
+    }
+
+    .phase-insight-body h4 {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--primary-dark);
+      margin-bottom: 3px;
+    }
+
+    .phase-insight-body p {
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--text-muted);
+    }
+
+    /* Kalender */
     .cal-header {
       display: flex;
       justify-content: space-between;
@@ -223,20 +316,37 @@
       margin-bottom: 14px;
     }
 
+    .cal-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .cal-header h3 {
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 800;
       color: var(--text-main);
     }
 
+    .btn-today-jump {
+      background: var(--purple-soft);
+      color: var(--purple);
+      border: none;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 9px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
     .nav-btn {
-      width: 38px;
-      height: 38px;
+      width: 36px;
+      height: 36px;
       border-radius: 12px;
       border: none;
-      background: var(--primary-light);
+      background: var(--primary-soft);
       color: var(--primary);
-      font-size: 20px;
+      font-size: 19px;
       font-weight: 800;
       cursor: pointer;
     }
@@ -260,15 +370,15 @@
     }
 
     .day-cell {
-      min-height: 46px;
-      border-radius: 14px;
+      min-height: 44px;
+      border-radius: 13px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       font-size: 14px;
       font-weight: 600;
-      background: #F9F5F7;
+      background: #F9F5F8;
       color: var(--text-main);
       position: relative;
       cursor: pointer;
@@ -281,18 +391,18 @@
       background: var(--primary);
       color: #FFFFFF;
       font-weight: 800;
-      box-shadow: 0 3px 8px rgba(225, 29, 72, 0.28);
+      box-shadow: 0 3px 8px rgba(225, 29, 72, 0.25);
     }
 
     .phase-predicted {
-      background: var(--primary-light);
+      background: var(--primary-soft);
       color: var(--primary-dark);
       border: 1.5px dashed #FB7185;
       font-weight: 700;
     }
 
     .phase-fertile {
-      background: var(--purple-light);
+      background: var(--purple-soft);
       color: var(--purple);
       font-weight: 700;
     }
@@ -301,11 +411,11 @@
       background: var(--purple);
       color: #FFFFFF;
       font-weight: 800;
-      box-shadow: 0 3px 8px rgba(126, 34, 206, 0.28);
+      box-shadow: 0 3px 8px rgba(126, 34, 206, 0.25);
     }
 
     .today-ring {
-      outline: 2.5px solid #271E2B;
+      outline: 2.5px solid #241929;
       outline-offset: 1px;
     }
 
@@ -315,7 +425,7 @@
       border-radius: 50%;
       background: #F59E0B;
       position: absolute;
-      bottom: 5px;
+      bottom: 4px;
     }
 
     .legend {
@@ -325,7 +435,7 @@
       margin-top: 14px;
       padding-top: 12px;
       border-top: 1px solid var(--border);
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text-muted);
       font-weight: 600;
     }
@@ -337,12 +447,13 @@
     }
 
     .dot {
-      width: 11px;
-      height: 11px;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
       display: inline-block;
     }
 
+    /* Section Titles */
     .section-title {
       font-size: 15px;
       font-weight: 800;
@@ -363,7 +474,7 @@
 
     .badge-avg {
       font-size: 11px;
-      background: var(--purple-light);
+      background: var(--purple-soft);
       color: var(--purple);
       padding: 3px 9px;
       border-radius: 99px;
@@ -378,7 +489,7 @@
     }
 
     .symptom-chip {
-      background: #FDF4F7;
+      background: #FDF5F8;
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 7px 11px;
@@ -403,8 +514,6 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      max-height: 240px;
-      overflow-y: auto;
     }
 
     .history-item {
@@ -414,7 +523,7 @@
       background: #FDF8FA;
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 10px 12px;
+      padding: 11px 12px;
     }
 
     .history-left strong {
@@ -439,7 +548,7 @@
       font-weight: 700;
       padding: 3px 8px;
       border-radius: 8px;
-      background: var(--primary-light);
+      background: var(--primary-soft);
       color: var(--primary-dark);
     }
 
@@ -447,7 +556,7 @@
       background: none;
       border: none;
       color: #9CA3AF;
-      font-size: 16px;
+      font-size: 17px;
       font-weight: 800;
       padding: 4px;
       cursor: pointer;
@@ -457,10 +566,10 @@
       text-align: center;
       font-size: 12px;
       color: var(--text-muted);
-      padding: 10px 6px;
+      padding: 12px 6px;
     }
 
-    /* Toggle Pengingat Minum Air */
+    /* Pengaturan & Toggle */
     .water-box {
       background: #F0FDFA;
       border: 1px solid #99F6E4;
@@ -492,11 +601,7 @@
       flex-shrink: 0;
     }
 
-    .switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
+    .switch input { opacity: 0; width: 0; height: 0; }
 
     .slider {
       position: absolute;
@@ -519,15 +624,9 @@
       border-radius: 50%;
     }
 
-    input:checked + .slider {
-      background-color: var(--teal);
-    }
+    input:checked + .slider { background-color: var(--teal); }
+    input:checked + .slider:before { transform: translateX(22px); }
 
-    input:checked + .slider:before {
-      transform: translateX(22px);
-    }
-
-    /* Form Pengaturan */
     .form-group { margin-bottom: 10px; }
 
     .form-row {
@@ -577,7 +676,83 @@
 
     .btn-save:active { transform: scale(0.98); }
 
-    /* Modal Catatan */
+    /* Backup & Restore Section */
+    .backup-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .btn-backup {
+      background: var(--purple-soft);
+      color: var(--purple);
+      border: 1px solid #E9D5FF;
+      padding: 11px;
+      border-radius: 13px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn-restore {
+      background: #F3F4F6;
+      color: var(--text-main);
+      border: 1px solid #E5E7EB;
+      padding: 11px;
+      border-radius: 13px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    /* ================= BOTTOM NAVIGATION BAR ================= */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      padding: 8px 12px calc(env(safe-area-inset-bottom, 8px) + 6px) 12px;
+      z-index: 90;
+      box-shadow: 0 -4px 16px rgba(36, 25, 41, 0.04);
+    }
+
+    .nav-tab {
+      background: none;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 0;
+      cursor: pointer;
+      border-radius: 12px;
+    }
+
+    .nav-tab span.icon {
+      font-size: 18px;
+      transition: transform 0.2s;
+    }
+
+    .nav-tab.active {
+      color: var(--primary);
+      background: #FFF1F2;
+    }
+
+    .nav-tab.active span.icon {
+      transform: scale(1.12);
+    }
+
+    /* ================= MODALS ================= */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -633,7 +808,7 @@
     }
 
     .btn-period-set {
-      background: var(--primary-light);
+      background: var(--primary-soft);
       color: var(--primary-dark);
       border: none;
       padding: 11px 8px;
@@ -643,7 +818,7 @@
     }
 
     .btn-period-end {
-      background: var(--teal-light);
+      background: var(--teal-soft);
       color: #0F766E;
       border: none;
       padding: 11px 8px;
@@ -666,16 +841,20 @@
   </style>
 </head>
 <body>
-  <!-- Custom Full-Screen Splash Overlay -->
-  <div id="customSplash">
-    <div class="splash-circle">
-      <svg width="58" height="58" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2.5C12 2.5 6 9.2 6 14C6 17.3137 8.68629 20 12 20C15.3137 20 18 17.3137 18 14C18 9.2 12 2.5 12 2.5Z" fill="#FFFFFF"/>
-        <path d="M13.5 11.5C12.2 11.5 11.2 12.5 11.2 13.8C11.2 15.1 12.2 16.1 13.5 16.1C14.1 16.1 14.6 15.9 15 15.5C14.1 15.4 13.4 14.7 13.4 13.8C13.4 12.9 14.1 12.2 15 12.1C14.6 11.7 14.1 11.5 13.5 11.5Z" fill="#E11D48"/>
-      </svg>
+  <!-- Animated Splash Screen -->
+  <div id="splashScreen">
+    <div class="splash-rings">
+      <div class="ring-wave"></div>
+      <div class="ring-wave"></div>
+      <div class="splash-emblem">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2.5C12 2.5 6 9.2 6 14C6 17.3137 8.68629 20 12 20C15.3137 20 18 17.3137 18 14C18 9.2 12 2.5 12 2.5Z" fill="#FFFFFF"/>
+          <path d="M13.5 11.5C12.2 11.5 11.2 12.5 11.2 13.8C11.2 15.1 12.2 16.1 13.5 16.1C14.1 16.1 14.6 15.9 15 15.5C14.1 15.4 13.4 14.7 13.4 13.8C13.4 12.9 14.1 12.2 15 12.1C14.6 11.7 14.1 11.5 13.5 11.5Z" fill="#E11D48"/>
+        </svg>
+      </div>
     </div>
-    <h1>LunaCycle</h1>
-    <p>Kalender & Pelacak Siklus Perempuan</p>
+    <h1 class="splash-title">LunaCycle</h1>
+    <p class="splash-sub">Pelacak Siklus & Kesehatan Harian</p>
   </div>
 
   <div class="app-shell">
@@ -683,14 +862,14 @@
       <div class="header-top">
         <div class="brand">
           <div class="brand-logo">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none">
               <path d="M12 2.5C12 2.5 6 9.2 6 14C6 17.3137 8.68629 20 12 20C15.3137 20 18 17.3137 18 14C18 9.2 12 2.5 12 2.5Z" fill="#FFFFFF"/>
               <path d="M13.5 11.5C12.2 11.5 11.2 12.5 11.2 13.8C11.2 15.1 12.2 16.1 13.5 16.1C14.1 16.1 14.6 15.9 15 15.5C14.1 15.4 13.4 14.7 13.4 13.8C13.4 12.9 14.1 12.2 15 12.1C14.6 11.7 14.1 11.5 13.5 11.5Z" fill="#E11D48"/>
             </svg>
           </div>
           <div>
             <h1>LunaCycle</h1>
-            <p>Pelacak Haid & Riwayat Siklus</p>
+            <p>100% Offline & Pribadi</p>
           </div>
         </div>
         <button class="btn-test" onclick="testNativeNotification()">🔔 Tes Notif</button>
@@ -698,7 +877,7 @@
 
       <div class="status-banner">
         <div class="status-info">
-          <span class="label">Status Siklus</span>
+          <span class="label" id="cycleDayBadge">Siklus Hari Ke-1</span>
           <h2 id="statusTitle">Menghitung...</h2>
           <p id="statusSubtitle">Atur tanggal haid terakhir</p>
         </div>
@@ -710,89 +889,136 @@
     </header>
 
     <main>
-      <!-- Kalender Bulanan -->
-      <section class="card">
-        <div class="cal-header">
-          <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
-          <h3 id="monthYearLabel">Bulan Tahun</h3>
-          <button class="nav-btn" onclick="changeMonth(1)">›</button>
-        </div>
-
-        <div class="weekdays">
-          <div>MIN</div><div>SEN</div><div>SEL</div><div>RAB</div><div>KAM</div><div>JUM</div><div>SAB</div>
-        </div>
-
-        <div id="calendarDays" class="days-grid"></div>
-
-        <div class="legend">
-          <div class="legend-item"><span class="dot" style="background:#E11D48;"></span> Haid Tercatat</div>
-          <div class="legend-item"><span class="dot" style="background:#FFE4E6; border:1.5px dashed #FB7185;"></span> Prediksi Haid</div>
-          <div class="legend-item"><span class="dot" style="background:#F3E8FF;"></span> Masa Subur</div>
-          <div class="legend-item"><span class="dot" style="background:#7E22CE;"></span> Puncak Ovulasi</div>
-        </div>
-      </section>
-
-      <!-- Statistik Kondisi & Gejala -->
-      <section class="card">
-        <div class="section-title">
-          <span>📊 Statistik Kondisi & Gejala</span>
-          <span id="totalNotesBadge" class="badge-avg">0 Catatan</span>
-        </div>
-        <div id="symptomStatsContainer" class="symptom-chips"></div>
-      </section>
-
-      <!-- Kartu Riwayat Bulanan -->
-      <section class="card">
-        <div class="section-title">
-          <span>📋 Riwayat Siklus Bulanan</span>
-          <span id="avgCycleBadge" class="badge-avg">Rata-rata: 28 Hr</span>
-        </div>
-        <div id="historyList" class="history-list"></div>
-      </section>
-
-      <!-- Pengaturan Siklus & Alarm -->
-      <section class="card">
-        <div class="section-title">
-          <span>⚙️ Pengaturan Siklus & Pengingat</span>
-          <span class="badge-pill">100% Offline</span>
-        </div>
-
-        <!-- Pengingat Minum Air & Suplemen -->
-        <div class="water-box">
-          <div class="water-info">
-            <strong>💧 Pengingat Minum Air & Vitamin</strong>
-            <span>Notif setiap 3 jam (08:00 - 20:00) selama masa haid</span>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="waterReminderToggle" onchange="toggleWaterReminder()" />
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <div class="form-group">
-          <label class="field-label">Hari Pertama Haid Terakhir</label>
-          <input type="date" id="lastPeriodInput" />
-        </div>
-
-        <div class="form-row">
-          <div>
-            <label class="field-label">Siklus (Hari)</label>
-            <input type="number" id="cycleLengthInput" min="20" max="45" value="28" />
-          </div>
-          <div>
-            <label class="field-label">Lama Haid (Hari)</label>
-            <input type="number" id="periodDurationInput" min="2" max="10" value="5" />
+      <!-- ================= TAB 1: KALENDER & FASE HARIAN ================= -->
+      <div id="tab-calendar" class="tab-pane active">
+        <!-- Info Fase Tubuh & Tips Harian -->
+        <div class="phase-insight-card">
+          <div class="phase-icon-badge" id="phaseEmoji">🌸</div>
+          <div class="phase-insight-body">
+            <h4 id="phaseNameTitle">Memuat Fase Siklus...</h4>
+            <p id="phaseTipText">Menyiapkan saran kesehatan harian sesuai fase siklusmu.</p>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="field-label">Jam Pengingat Notifikasi Haid</label>
-          <input type="time" id="reminderTimeInput" value="08:00" />
-        </div>
+        <!-- Kalender -->
+        <section class="card">
+          <div class="cal-header">
+            <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+            <div class="cal-title-wrap">
+              <h3 id="monthYearLabel">Bulan Tahun</h3>
+              <button class="btn-today-jump" onclick="jumpToToday()">Hari Ini</button>
+            </div>
+            <button class="nav-btn" onclick="changeMonth(1)">›</button>
+          </div>
 
-        <button class="btn-save" onclick="saveSettingsAndSchedule()">Simpan & Jadwalkan Notifikasi</button>
-      </section>
+          <div class="weekdays">
+            <div>MIN</div><div>SEN</div><div>SEL</div><div>RAB</div><div>KAM</div><div>JUM</div><div>SAB</div>
+          </div>
+
+          <div id="calendarDays" class="days-grid"></div>
+
+          <div class="legend">
+            <div class="legend-item"><span class="dot" style="background:#E11D48;"></span> Haid Tercatat</div>
+            <div class="legend-item"><span class="dot" style="background:#FFE4E6; border:1.5px dashed #FB7185;"></span> Prediksi Haid</div>
+            <div class="legend-item"><span class="dot" style="background:#F3E8FF;"></span> Masa Subur</div>
+            <div class="legend-item"><span class="dot" style="background:#7E22CE;"></span> Puncak Ovulasi</div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= TAB 2: RIWAYAT & STATISTIK ================= -->
+      <div id="tab-history" class="tab-pane">
+        <section class="card">
+          <div class="section-title">
+            <span>📊 Statistik Kondisi & Gejala</span>
+            <span id="totalNotesBadge" class="badge-avg">0 Catatan</span>
+          </div>
+          <div id="symptomStatsContainer" class="symptom-chips"></div>
+        </section>
+
+        <section class="card">
+          <div class="section-title">
+            <span>📋 Riwayat Siklus Bulanan</span>
+            <span id="avgCycleBadge" class="badge-avg">Rata-rata: 28 Hr</span>
+          </div>
+          <div id="historyList" class="history-list"></div>
+        </section>
+      </div>
+
+      <!-- ================= TAB 3: PENGATURAN & BACKUP ================= -->
+      <div id="tab-settings" class="tab-pane">
+        <section class="card">
+          <div class="section-title">
+            <span>⚙️ Pengaturan Siklus & Alarm</span>
+            <span class="badge-pill">Offline</span>
+          </div>
+
+          <div class="water-box">
+            <div class="water-info">
+              <strong>💧 Pengingat Minum Air & Vitamin</strong>
+              <span>Notif tiap 3 jam (08:00–20:00) saat masa haid</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="waterReminderToggle" onchange="toggleWaterReminder()" />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="field-label">Hari Pertama Haid Terakhir</label>
+            <input type="date" id="lastPeriodInput" />
+          </div>
+
+          <div class="form-row">
+            <div>
+              <label class="field-label">Siklus (Hari)</label>
+              <input type="number" id="cycleLengthInput" min="20" max="45" value="28" />
+            </div>
+            <div>
+              <label class="field-label">Lama Haid (Hari)</label>
+              <input type="number" id="periodDurationInput" min="2" max="10" value="5" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="field-label">Jam Pengingat Notifikasi Haid</label>
+            <input type="time" id="reminderTimeInput" value="08:00" />
+          </div>
+
+          <button class="btn-save" onclick="saveSettingsAndSchedule()">Simpan & Jadwalkan Notifikasi</button>
+        </section>
+
+        <!-- Kartu Backup & Restore Data Offline -->
+        <section class="card">
+          <div class="section-title">
+            <span>💾 Cadangan Data (Backup Offline)</span>
+          </div>
+          <p style="font-size:12px; color:var(--text-muted); line-height:1.45; margin-bottom:10px;">
+            Simpan kode cadangan riwayat siklus & catatan harianmu agar aman saat ganti HP atau instal ulang aplikasi.
+          </p>
+          <div class="backup-actions">
+            <button class="btn-backup" onclick="exportBackupCode()">📤 Salin Kode Cadangan</button>
+            <button class="btn-restore" onclick="openRestoreModal()">📥 Pulihkan Data</button>
+          </div>
+        </section>
+      </div>
     </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+      <button class="nav-tab active" onclick="switchTab('calendar', this)">
+        <span class="icon">📅</span>
+        <span>Kalender</span>
+      </button>
+      <button class="nav-tab" onclick="switchTab('history', this)">
+        <span class="icon">📊</span>
+        <span>Riwayat</span>
+      </button>
+      <button class="nav-tab" onclick="switchTab('settings', this)">
+        <span class="icon">⚙️</span>
+        <span>Pengaturan</span>
+      </button>
+    </nav>
   </div>
 
   <!-- Modal Detail Tanggal -->
@@ -826,16 +1052,38 @@
     </div>
   </div>
 
+  <!-- Modal Restore Data -->
+  <div id="restoreModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h4>📥 Pulihkan Cadangan Data</h4>
+        <button class="btn-close" onclick="closeRestoreModal()">&times;</button>
+      </div>
+      <div class="form-group">
+        <label class="field-label">Tempel (Paste) Kode Cadangan di Bawah Ini</label>
+        <textarea id="restoreInputText" rows="4" placeholder='Tempel kode cadangan yang pernah disalin...'></textarea>
+      </div>
+      <button class="btn-save" onclick="processRestoreData()">Pulihkan Sekarang</button>
+    </div>
+  </div>
+
   <script>
     const CHANNEL_ID = "lunacycle_high_priority";
 
-    // Sembunyikan custom splash screen setelah siap
+    // Tutup Splash Screen dengan animasi halus
     window.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
-        const splash = document.getElementById('customSplash');
-        if (splash) splash.classList.add('hide');
-      }, 950);
+        const splash = document.getElementById('splashScreen');
+        if (splash) splash.classList.add('fade-out');
+      }, 1150);
     });
+
+    function switchTab(tabName, btnEl) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + tabName).classList.add('active');
+      if (btnEl) btnEl.classList.add('active');
+    }
 
     function formatDateKey(dateObj) {
       const y = dateObj.getFullYear();
@@ -883,6 +1131,61 @@
       localStorage.setItem('lunacycle_data', JSON.stringify(appData));
     }
 
+    // ================= BACKUP & RESTORE =================
+    async function exportBackupCode() {
+      const backupStr = JSON.stringify(appData);
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(backupStr);
+          alert("Kode cadangan berhasil disalin ke Clipboard! Simpan kode ini di catatan HP atau WhatsApp pribadi.");
+        } else {
+          prompt("Salin semua teks kode cadangan di bawah ini:", backupStr);
+        }
+      } catch (e) {
+        prompt("Salin semua teks kode cadangan di bawah ini:", backupStr);
+      }
+    }
+
+    function openRestoreModal() {
+      document.getElementById('restoreInputText').value = '';
+      document.getElementById('restoreModal').classList.add('active');
+    }
+
+    function closeRestoreModal() {
+      document.getElementById('restoreModal').classList.remove('active');
+    }
+
+    function processRestoreData() {
+      const raw = document.getElementById('restoreInputText').value.trim();
+      if (!raw) {
+        alert("Tempel kode cadangan terlebih dahulu.");
+        return;
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        if (!parsed.lastPeriod || !Array.isArray(parsed.history)) {
+          throw new Error("Format kode tidak valid");
+        }
+        appData = { ...defaultData, ...parsed, notes: parsed.notes || {} };
+        persistData();
+        document.getElementById('lastPeriodInput').value = appData.lastPeriod;
+        document.getElementById('cycleLengthInput').value = appData.cycleLength;
+        document.getElementById('periodDurationInput').value = appData.periodDuration;
+        document.getElementById('reminderTimeInput').value = appData.reminderTime;
+        document.getElementById('waterReminderToggle').checked = Boolean(appData.waterReminder);
+
+        closeRestoreModal();
+        renderSymptomStats();
+        renderHistory();
+        renderCalendar();
+        updateDashboard();
+        alert("Data riwayat & catatan berhasil dipulihkan!");
+      } catch (e) {
+        alert("Kode cadangan tidak valid atau terpotong. Pastikan menyalin seluruh teks kode.");
+      }
+    }
+
+    // ================= RIWAYAT & STATISTIK =================
     function recordToHistory(startDateStr, durationDays, isCompleted = false) {
       const existingIdx = appData.history.findIndex(item => item.startDate === startDateStr);
       if (existingIdx >= 0) {
@@ -912,7 +1215,6 @@
       }
     }
 
-    // Render Statistik Kondisi & Gejala
     function renderSymptomStats() {
       const container = document.getElementById('symptomStatsContainer');
       const totalBadge = document.getElementById('totalNotesBadge');
@@ -930,7 +1232,7 @@
 
       const sortedSymptoms = Object.entries(counts).sort((a, b) => b[1] - a[1]);
       if (sortedSymptoms.length === 0) {
-        container.innerHTML = `<div class="empty-text" style="width:100%;">Ketuk tanggal di kalender untuk mulai mencatat kondisi atau gejala harian.</div>`;
+        container.innerHTML = `<div class="empty-text" style="width:100%;">Ketuk tanggal di kalender untuk mulai mencatat gejala harian.</div>`;
         return;
       }
 
@@ -1008,6 +1310,7 @@
       }
     }
 
+    // ================= NOTIFIKASI NATIVE =================
     function getLocalNotifPlugin() {
       try {
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
@@ -1078,12 +1381,10 @@
       }
     }
 
-    // Jadwalkan Pengingat Minum Air & Suplemen selama fase haid (ID 201..235)
     async function scheduleWaterNotifications() {
       const LocalNotifications = getLocalNotifPlugin();
       if (!LocalNotifications) return;
 
-      // Bersihkan jadwal pengingat air lama
       const oldIds = [];
       for (let i = 201; i <= 240; i++) oldIds.push({ id: i });
       try { await LocalNotifications.cancel({ notifications: oldIds }); } catch (e) {}
@@ -1099,7 +1400,7 @@
       const start = parseLocalDate(latestCycle.startDate);
       const dur = Number(latestCycle.duration) || Number(appData.periodDuration) || 5;
       const now = new Date();
-      const hours = [8, 11, 14, 17, 20]; // Setiap 3 jam dari jam 08:00 - 20:00
+      const hours = [8, 11, 14, 17, 20];
       const list = [];
       let notifId = 201;
 
@@ -1113,7 +1414,7 @@
             list.push({
               id: notifId++,
               title: "Waktunya Minum Air & Istirahat 💧",
-              body: "Jaga hidrasi tubuh & konsumsi vitamin/air hangat agar kram haid berkurang.",
+              body: "Jaga hidrasi tubuh & minum air hangat agar kram haid berkurang.",
               channelId: CHANNEL_ID,
               schedule: { at: target, allowWhileIdle: true }
             });
@@ -1195,6 +1496,7 @@
       } catch (e) {}
     }
 
+    // ================= PERHITUNGAN SIKLUS & FASE TUBUH =================
     function calculateCycleData() {
       const start = parseLocalDate(appData.lastPeriod);
       const cycleLen = Number(appData.cycleLength) || 28;
@@ -1216,9 +1518,12 @@
     }
 
     function updateDashboard() {
-      const { nextPeriod, ovulation } = calculateCycleData();
+      const { start, nextPeriod, ovulation, fertileStart, fertileEnd, periodDur } = calculateCycleData();
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+
+      const cycleDay = Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1;
+      document.getElementById('cycleDayBadge').textContent = cycleDay >= 1 ? `Siklus Hari Ke-${cycleDay}` : "Status Siklus";
 
       const diffDays = Math.ceil((nextPeriod - today) / (1000 * 60 * 60 * 24));
       const statusTitle = document.getElementById('statusTitle');
@@ -1237,6 +1542,34 @@
         countdownDays.textContent = Math.abs(diffDays);
         statusTitle.textContent = "Terlambat dari Jadwal";
         statusSubtitle.textContent = `Lewat ${Math.abs(diffDays)} hari dari perkiraan`;
+      }
+
+      // Perbarui Kartu Info Fase Tubuh & Tips Harian
+      const phaseEmoji = document.getElementById('phaseEmoji');
+      const phaseNameTitle = document.getElementById('phaseNameTitle');
+      const phaseTipText = document.getElementById('phaseTipText');
+      const todayKey = formatDateKey(today);
+
+      if (isDateInPeriodHistory(today)) {
+        phaseEmoji.textContent = "🩸";
+        phaseNameTitle.textContent = "Fase Menstruasi (Sedang Haid)";
+        phaseTipText.textContent = "Perbanyak minum air hangat, konsumsi makanan kaya zat besi, dan kurangi aktivitas berat agar kram mereda.";
+      } else if (todayKey === formatDateKey(ovulation)) {
+        phaseEmoji.textContent = "💜";
+        phaseNameTitle.textContent = "Puncak Ovulasi (Masa Paling Subur)";
+        phaseTipText.textContent = "Energi dan suhu basal tubuh biasanya meningkat. Jaga hidrasi dan konsumsi makanan bergizi seimbang.";
+      } else if (today >= fertileStart && today <= fertileEnd) {
+        phaseEmoji.textContent = "🌷";
+        phaseNameTitle.textContent = "Fase Masa Subur";
+        phaseTipText.textContent = "Tubuh bersiap melepaskan sel telur. Kondisi fisik umumnya terasa lebih bugar dan bersemangat.";
+      } else if (diffDays > 0 && diffDays <= 5) {
+        phaseEmoji.textContent = "🌙";
+        phaseNameTitle.textContent = "Fase Luteal Akhir (Menjelang PMS)";
+        phaseTipText.textContent = "Wajar jika terasa lebih sensitif, mudah lelah, atau nafsu makan meningkat. Siapkan pembalut lebih awal.";
+      } else {
+        phaseEmoji.textContent = "✨";
+        phaseNameTitle.textContent = "Fase Folikuler (Stabil & Nyaman)";
+        phaseTipText.textContent = "Hormon mulai stabil kembali. Waktu yang tepat untuk olahraga ringan dan menjaga pola tidur teratur.";
       }
 
       scheduleCycleNotifications(nextPeriod, ovulation);
@@ -1304,6 +1637,11 @@
       renderCalendar();
     }
 
+    function jumpToToday() {
+      currentViewDate = new Date();
+      renderCalendar();
+    }
+
     function saveSettingsAndSchedule() {
       const newStart = document.getElementById('lastPeriodInput').value || formatDateKey(new Date());
       appData.cycleLength = Number(document.getElementById('cycleLengthInput').value) || 28;
@@ -1355,10 +1693,8 @@
       renderCalendar();
     }
 
-    // Tandai Haid Selesai pada tanggal yang dipilih
     function setAsPeriodEnd() {
       const endDate = parseLocalDate(selectedDateKey);
-      // Cari siklus haid yang dimulai sebelum atau pada tanggal selesai ini
       const targetCycle = appData.history.find(item => parseLocalDate(item.startDate) <= endDate);
 
       if (!targetCycle) {
@@ -1377,7 +1713,6 @@
       targetCycle.duration = actualDuration;
       targetCycle.isCompleted = true;
 
-      // Jika ini siklus terbaru, perbarui juga durasi tampilan di form
       if (targetCycle.startDate === appData.lastPeriod) {
         appData.periodDuration = actualDuration;
         document.getElementById('periodDurationInput').value = actualDuration;

@@ -440,11 +440,11 @@
       box-shadow: 0 3px 8px rgba(225, 29, 72, 0.25);
     }
 
-    .phase-period-completed {
+    .phase-period-end-day {
       background: var(--teal);
       color: #FFFFFF;
       font-weight: 800;
-      box-shadow: 0 3px 8px rgba(13, 148, 136, 0.22);
+      box-shadow: 0 3px 8px rgba(13, 148, 136, 0.28);
     }
 
     .phase-predicted {
@@ -878,8 +878,8 @@
         <div id="calendarDays" class="days-grid"></div>
 
         <div class="legend">
-          <div class="legend-item"><span class="dot" style="background:#E11D48;"></span> Haid Berlangsung</div>
-          <div class="legend-item"><span class="dot" style="background:#0D9488;"></span> Haid Selesai</div>
+          <div class="legend-item"><span class="dot" style="background:#E11D48;"></span> Hari Haid</div>
+          <div class="legend-item"><span class="dot" style="background:#0D9488;"></span> Hari Selesai Haid</div>
           <div class="legend-item"><span class="dot" style="background:#FFE4E6; border:1.5px dashed #FB7185;"></span> Prediksi Haid</div>
           <div class="legend-item"><span class="dot" style="background:#F3E8FF;"></span> Masa Subur</div>
           <div class="legend-item"><span class="dot" style="background:#7E22CE;"></span> Puncak Ovulasi</div>
@@ -1461,13 +1461,22 @@
       return { start, nextPeriod, ovulation, fertileStart, fertileEnd, periodDur };
     }
 
-    function getPeriodHistoryEntry(cellDate) {
-      return appData.history.find(item => {
+    function getPeriodDayStatus(cellDate) {
+      const cellKey = formatDateKey(cellDate);
+      for (const item of appData.history) {
         const hStart = parseLocalDate(item.startDate);
         const hEnd = new Date(hStart);
         hEnd.setDate(hStart.getDate() + (Number(item.duration) || Number(appData.periodDuration) || 5) - 1);
-        return cellDate >= hStart && cellDate <= hEnd;
-      });
+
+        if (cellDate >= hStart && cellDate <= hEnd) {
+          // Hanya hari akhir yang sudah ditandai selesai berwarna hijau toska
+          if (item.isCompleted && cellKey === formatDateKey(hEnd)) {
+            return "end-day";
+          }
+          return "period-day";
+        }
+      }
+      return null;
     }
 
     function updateDashboard() {
@@ -1501,12 +1510,16 @@
       const phaseNameTitle = document.getElementById('phaseNameTitle');
       const phaseTipText = document.getElementById('phaseTipText');
       const todayKey = formatDateKey(today);
-      const todayPeriodEntry = getPeriodHistoryEntry(today);
+      const todayStatus = getPeriodDayStatus(today);
 
-      if (todayPeriodEntry && !todayPeriodEntry.isCompleted) {
+      if (todayStatus === "period-day") {
         phaseEmoji.textContent = "🩸";
         phaseNameTitle.textContent = "Fase Menstruasi (Sedang Haid)";
         phaseTipText.textContent = "Perbanyak minum air hangat, konsumsi makanan kaya zat besi, dan kurangi aktivitas berat agar kram mereda.";
+      } else if (todayStatus === "end-day") {
+        phaseEmoji.textContent = "✅";
+        phaseNameTitle.textContent = "Hari Selesai Haid";
+        phaseTipText.textContent = "Haid telah selesai! Tetap jaga hidrasi dan istirahat yang cukup untuk memulihkan stamina.";
       } else if (todayKey === formatDateKey(ovulation)) {
         phaseEmoji.textContent = "💜";
         phaseNameTitle.textContent = "Puncak Ovulasi (Masa Paling Subur)";
@@ -1553,10 +1566,12 @@
 
         const nextPeriodEnd = new Date(nextPeriod);
         nextPeriodEnd.setDate(nextPeriod.getDate() + periodDur - 1);
-        const historyEntry = getPeriodHistoryEntry(cellDate);
+        const periodStatus = getPeriodDayStatus(cellDate);
 
-        if (historyEntry) {
-          phaseClass = historyEntry.isCompleted ? "phase-period-completed" : "phase-period";
+        if (periodStatus === "end-day") {
+          phaseClass = "phase-period-end-day";
+        } else if (periodStatus === "period-day") {
+          phaseClass = "phase-period";
         } else if (cellDate >= nextPeriod && cellDate <= nextPeriodEnd) {
           phaseClass = "phase-predicted";
         } else if (key === formatDateKey(ovulation)) {
@@ -1668,7 +1683,7 @@
       renderHistory();
       updateDashboard();
       renderCalendar();
-      alert(`Haid ditandai selesai! Tanggal ditandai warna hijau toska (${actualDuration} hari).`);
+      alert(`Haid ditandai selesai! Tanggal akhir ditandai warna hijau toska (durasi ${actualDuration} hari).`);
     }
 
     updateWaterButtonUI();

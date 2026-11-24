@@ -1,4 +1,4 @@
-name: Build LunaCycle V6 Android APK
+name: Build LunaCycle V7 Android APK
 
 on:
   push:
@@ -11,15 +11,15 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       - name: Setup Java JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -31,7 +31,7 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: Generate Icon, Notification SmallIcon & Full-Screen Splash
+      - name: Generate Clean App Icon & Notification SmallIcon
         run: |
           pip install pillow
           python3 - << 'EOF'
@@ -50,7 +50,7 @@ jobs:
               draw.ellipse([cx - int(48*scale), cy - int(32*scale), cx + int(48*scale), cy + int(64*scale)], fill=(225, 29, 72, 255))
               draw.ellipse([cx - int(22*scale), cy - int(45*scale), cx + int(65*scale), cy + int(45*scale)], fill=(255, 255, 255, 255))
 
-          # 1. Ikon Aplikasi Utama (512x512)
+          # 1. Ikon Launcher Utama (512x512)
           size = 512
           img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
           draw = ImageDraw.Draw(img)
@@ -64,6 +64,11 @@ jobs:
           ImageDraw.Draw(mask).rounded_rectangle([0, 0, size, size], radius=115, fill=255)
           img.putalpha(mask)
           draw_lunacycle_emblem(draw, 256, 285, 1.0)
+
+          # Foreground aman tanpa lingkaran abu-abu (skala lebih kecil di tengah)
+          fg_img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+          fg_draw = ImageDraw.Draw(fg_img)
+          draw_lunacycle_emblem(fg_draw, 256, 275, 0.65)
 
           anydpi_dir = os.path.join(res_dir, "mipmap-anydpi-v26")
           if os.path.exists(anydpi_dir):
@@ -79,10 +84,9 @@ jobs:
           for folder, px in sizes.items():
               target_dir = os.path.join(res_dir, folder)
               if os.path.exists(target_dir):
-                  resized = img.resize((px, px), Image.LANCZOS)
-                  resized.save(os.path.join(target_dir, "ic_launcher.png"))
-                  resized.save(os.path.join(target_dir, "ic_launcher_round.png"))
-                  resized.save(os.path.join(target_dir, "ic_launcher_foreground.png"))
+                  img.resize((px, px), Image.LANCZOS).save(os.path.join(target_dir, "ic_launcher.png"))
+                  img.resize((px, px), Image.LANCZOS).save(os.path.join(target_dir, "ic_launcher_round.png"))
+                  fg_img.resize((px, px), Image.LANCZOS).save(os.path.join(target_dir, "ic_launcher_foreground.png"))
 
           # 2. Ikon Notifikasi Siluet Putih Monokrom
           notif_size = 96
@@ -97,24 +101,6 @@ jobs:
           drawable_dir = os.path.join(res_dir, "drawable")
           os.makedirs(drawable_dir, exist_ok=True)
           n_img.save(os.path.join(drawable_dir, "ic_stat_lunacycle.png"))
-
-          # 3. Replace semua splash.png bawaan Capacitor dengan Full-Screen Splash LunaCycle
-          sw, sh = 1080, 1920
-          splash = Image.new("RGBA", (sw, sh), (225, 29, 72, 255))
-          s_draw = ImageDraw.Draw(splash)
-          for y in range(sh):
-              r = int(225 - (y / sh) * 78)
-              g = int(29 + (y / sh) * 22)
-              b = int(72 + (y / sh) * 162)
-              s_draw.line([(0, y), (sw, y)], fill=(r, g, b, 255))
-
-          s_draw.ellipse([sw//2 - 220, sh//2 - 220, sw//2 + 220, sh//2 + 220], fill=(255, 255, 255, 35))
-          draw_lunacycle_emblem(s_draw, sw // 2, sh // 2 + 25, 1.45)
-
-          splash.save(os.path.join(drawable_dir, "splash.png"))
-          for root, dirs, files in os.walk(res_dir):
-              if "splash.png" in files:
-                  splash.save(os.path.join(root, "splash.png"))
           EOF
 
       - name: Add Universal Notification Permissions to AndroidManifest
@@ -131,5 +117,5 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LunaCycle-APK-V6
+          name: LunaCycle-APK-V7
           path: android/app/build/outputs/apk/debug/app-debug.apk

@@ -36,7 +36,7 @@
       overflow-x: hidden;
     }
 
-    /* ================= SPLASH SCREEN ANIMATION (BERSIH TANPA LINGKARAN ABU) ================= */
+    /* ================= SPLASH SCREEN ANIMATION ================= */
     #splashScreen {
       position: fixed;
       inset: 0;
@@ -432,11 +432,19 @@
 
     .day-cell:active { transform: scale(0.93); }
 
+    /* Warna Fase Kalender */
     .phase-period {
       background: var(--primary);
       color: #FFFFFF;
       font-weight: 800;
       box-shadow: 0 3px 8px rgba(225, 29, 72, 0.25);
+    }
+
+    .phase-period-completed {
+      background: var(--teal);
+      color: #FFFFFF;
+      font-weight: 800;
+      box-shadow: 0 3px 8px rgba(13, 148, 136, 0.22);
     }
 
     .phase-predicted {
@@ -496,6 +504,7 @@
       height: 10px;
       border-radius: 50%;
       display: inline-block;
+      flex-shrink: 0;
     }
 
     /* Section Titles */
@@ -562,6 +571,11 @@
       padding: 11px 12px;
     }
 
+    .history-item.completed {
+      background: #F0FDFA;
+      border-color: #CCFBF1;
+    }
+
     .history-left strong {
       display: block;
       font-size: 13px;
@@ -586,6 +600,11 @@
       border-radius: 8px;
       background: var(--primary-soft);
       color: var(--primary-dark);
+    }
+
+    .cycle-tag.completed {
+      background: var(--teal-soft);
+      color: #0F766E;
     }
 
     .btn-del-hist {
@@ -805,7 +824,7 @@
         <button class="btn-test" onclick="testNativeNotification()">🔔 Tes Notif</button>
       </div>
 
-      <!-- Status Banner (Klik juga bisa buka setting tanggal) -->
+      <!-- Status Banner -->
       <div class="status-banner" onclick="openQuickSetupModal()">
         <div class="status-info">
           <span class="label" id="cycleDayBadge">Siklus Hari Ke-1</span>
@@ -818,7 +837,7 @@
         </div>
       </div>
 
-      <!-- Tombol Akses Cepat Tanpa Pindah Tab -->
+      <!-- Tombol Akses Cepat -->
       <div class="quick-actions-grid">
         <button class="btn-quick-setup" onclick="openQuickSetupModal()">
           <span>⚙️ Atur Tanggal & Siklus</span>
@@ -859,7 +878,8 @@
         <div id="calendarDays" class="days-grid"></div>
 
         <div class="legend">
-          <div class="legend-item"><span class="dot" style="background:#E11D48;"></span> Haid Tercatat</div>
+          <div class="legend-item"><span class="dot" style="background:#E11D48;"></span> Haid Berlangsung</div>
+          <div class="legend-item"><span class="dot" style="background:#0D9488;"></span> Haid Selesai</div>
           <div class="legend-item"><span class="dot" style="background:#FFE4E6; border:1.5px dashed #FB7185;"></span> Prediksi Haid</div>
           <div class="legend-item"><span class="dot" style="background:#F3E8FF;"></span> Masa Subur</div>
           <div class="legend-item"><span class="dot" style="background:#7E22CE;"></span> Puncak Ovulasi</div>
@@ -900,7 +920,7 @@
     </main>
   </div>
 
-  <!-- MODAL 1: Pengaturan Tanggal & Siklus Cepat (Popup Instan di Halaman Utama) -->
+  <!-- MODAL 1: Pengaturan Tanggal & Siklus Cepat -->
   <div id="quickSetupModal" class="modal-backdrop">
     <div class="modal-box">
       <div class="modal-header">
@@ -982,7 +1002,6 @@
   <script>
     const CHANNEL_ID = "lunacycle_high_priority";
 
-    // Tutup Splash Screen dengan animasi halus
     window.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         const splash = document.getElementById('splashScreen');
@@ -1114,7 +1133,7 @@
       const existingIdx = appData.history.findIndex(item => item.startDate === startDateStr);
       if (existingIdx >= 0) {
         appData.history[existingIdx].duration = durationDays;
-        if (isCompleted) appData.history[existingIdx].isCompleted = true;
+        appData.history[existingIdx].isCompleted = isCompleted;
       } else {
         appData.history.push({ startDate: startDateStr, duration: durationDays, isCompleted });
       }
@@ -1195,8 +1214,10 @@
         });
 
         const dur = item.duration || appData.periodDuration;
-        const statusText = item.isCompleted ? `Selesai (${dur} hari)` : `Durasi ${dur} hari`;
-        let badgeText = "Tercatat";
+        const statusIcon = item.isCompleted ? "✅" : "🩸";
+        const statusText = item.isCompleted ? `Selesai (${dur} hari)` : `Berlangsung / Durasi ${dur} hari`;
+        const completedClass = item.isCompleted ? "completed" : "";
+        let badgeText = item.isCompleted ? "Selesai" : "Tercatat";
 
         if (index < appData.history.length - 1) {
           const prevStart = parseLocalDate(appData.history[index + 1].startDate);
@@ -1209,13 +1230,13 @@
         }
 
         html += `
-          <div class="history-item">
+          <div class="history-item ${completedClass}">
             <div class="history-left">
-              <strong>🩸 ${formattedDate}</strong>
+              <strong>${statusIcon} ${formattedDate}</strong>
               <span>${statusText}</span>
             </div>
             <div class="history-right">
-              <span class="cycle-tag">${badgeText}</span>
+              <span class="cycle-tag ${completedClass}">${badgeText}</span>
               <button class="btn-del-hist" onclick="deleteHistoryItem('${item.startDate}')" title="Hapus">&times;</button>
             </div>
           </div>
@@ -1440,6 +1461,15 @@
       return { start, nextPeriod, ovulation, fertileStart, fertileEnd, periodDur };
     }
 
+    function getPeriodHistoryEntry(cellDate) {
+      return appData.history.find(item => {
+        const hStart = parseLocalDate(item.startDate);
+        const hEnd = new Date(hStart);
+        hEnd.setDate(hStart.getDate() + (Number(item.duration) || Number(appData.periodDuration) || 5) - 1);
+        return cellDate >= hStart && cellDate <= hEnd;
+      });
+    }
+
     function updateDashboard() {
       const { start, nextPeriod, ovulation, fertileStart, fertileEnd } = calculateCycleData();
       const today = new Date();
@@ -1471,8 +1501,9 @@
       const phaseNameTitle = document.getElementById('phaseNameTitle');
       const phaseTipText = document.getElementById('phaseTipText');
       const todayKey = formatDateKey(today);
+      const todayPeriodEntry = getPeriodHistoryEntry(today);
 
-      if (isDateInPeriodHistory(today)) {
+      if (todayPeriodEntry && !todayPeriodEntry.isCompleted) {
         phaseEmoji.textContent = "🩸";
         phaseNameTitle.textContent = "Fase Menstruasi (Sedang Haid)";
         phaseTipText.textContent = "Perbanyak minum air hangat, konsumsi makanan kaya zat besi, dan kurangi aktivitas berat agar kram mereda.";
@@ -1495,15 +1526,6 @@
       }
 
       scheduleCycleNotifications(nextPeriod, ovulation);
-    }
-
-    function isDateInPeriodHistory(cellDate) {
-      return appData.history.some(item => {
-        const hStart = parseLocalDate(item.startDate);
-        const hEnd = new Date(hStart);
-        hEnd.setDate(hStart.getDate() + (Number(item.duration) || Number(appData.periodDuration) || 5) - 1);
-        return cellDate >= hStart && cellDate <= hEnd;
-      });
     }
 
     function renderCalendar() {
@@ -1531,9 +1553,10 @@
 
         const nextPeriodEnd = new Date(nextPeriod);
         nextPeriodEnd.setDate(nextPeriod.getDate() + periodDur - 1);
+        const historyEntry = getPeriodHistoryEntry(cellDate);
 
-        if (isDateInPeriodHistory(cellDate)) {
-          phaseClass = "phase-period";
+        if (historyEntry) {
+          phaseClass = historyEntry.isCompleted ? "phase-period-completed" : "phase-period";
         } else if (cellDate >= nextPeriod && cellDate <= nextPeriodEnd) {
           phaseClass = "phase-predicted";
         } else if (key === formatDateKey(ovulation)) {
@@ -1645,7 +1668,7 @@
       renderHistory();
       updateDashboard();
       renderCalendar();
-      alert(`Haid ditandai selesai! Durasi aktual tercatat: ${actualDuration} hari.`);
+      alert(`Haid ditandai selesai! Tanggal ditandai warna hijau toska (${actualDuration} hari).`);
     }
 
     updateWaterButtonUI();

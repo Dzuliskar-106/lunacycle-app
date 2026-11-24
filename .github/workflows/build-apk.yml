@@ -1,4 +1,4 @@
-name: Build LunaCycle V5 Android APK
+name: Build LunaCycle V6 Android APK
 
 on:
   push:
@@ -11,15 +11,15 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Setup Java JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -98,7 +98,7 @@ jobs:
           os.makedirs(drawable_dir, exist_ok=True)
           n_img.save(os.path.join(drawable_dir, "ic_stat_lunacycle.png"))
 
-          # 3. Full-Screen Splash Screen (1080x1920)
+          # 3. Replace semua splash.png bawaan Capacitor dengan Full-Screen Splash LunaCycle
           sw, sh = 1080, 1920
           splash = Image.new("RGBA", (sw, sh), (225, 29, 72, 255))
           s_draw = ImageDraw.Draw(splash)
@@ -108,7 +108,6 @@ jobs:
               b = int(72 + (y / sh) * 162)
               s_draw.line([(0, y), (sw, y)], fill=(r, g, b, 255))
 
-          # Lingkaran lembut di belakang emblem splash
           s_draw.ellipse([sw//2 - 220, sh//2 - 220, sw//2 + 220, sh//2 + 220], fill=(255, 255, 255, 35))
           draw_lunacycle_emblem(s_draw, sw // 2, sh // 2 + 25, 1.45)
 
@@ -118,31 +117,10 @@ jobs:
                   splash.save(os.path.join(root, "splash.png"))
           EOF
 
-      - name: Configure Full-Screen Splash & Permissions in AndroidManifest
+      - name: Add Universal Notification Permissions to AndroidManifest
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           sed -i 's/<uses-permission android:name="android.permission.INTERNET" \/>/<uses-permission android:name="android.permission.INTERNET" \/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" \/>\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" \/>\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" \/>\n    <uses-permission android:name="android.permission.WAKE_LOCK" \/>\n    <uses-permission android:name="android.permission.VIBRATE" \/>\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" \/>/' $MANIFEST
-
-          STYLES="android/app/src/main/res/values/styles.xml"
-          cat << 'EOF' > $STYLES
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-                  <item name="colorPrimary">#E11D48</item>
-                  <item name="colorPrimaryDark">#BE123C</item>
-                  <item name="colorAccent">#9333EA</item>
-              </style>
-              <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
-                  <item name="windowActionBar">false</item>
-                  <item name="windowNoTitle">true</item>
-                  <item name="android:background">#E11D48</item>
-              </style>
-              <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-                  <item name="android:background">@drawable/splash</item>
-                  <item name="android:windowFullscreen">true</item>
-              </style>
-          </resources>
-          EOF
 
       - name: Build Debug APK
         run: |
@@ -153,5 +131,5 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LunaCycle-APK-V5
+          name: LunaCycle-APK-V6
           path: android/app/build/outputs/apk/debug/app-debug.apk
